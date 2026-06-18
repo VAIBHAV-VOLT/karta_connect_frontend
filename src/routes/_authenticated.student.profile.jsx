@@ -102,87 +102,53 @@ function StudentProfilePage() {
         };
     }, [resumeUrl]);
 
-    async function handleSave(e) {
-        e.preventDefault();
-        if (!user)
-            return;
-        if (!name || !university || !course || !yearOfStudy || !graduationYear) {
-            toast.error("Please fill required fields.");
-            return;
-        }
-        setSaving(true);
-        try {
-            const { error } = await supabase
-                .from("student_profiles")
-                .update({
-                name,
-                location,
-                university,
-                course,
-                year_of_study: yearOfStudy,
-                graduation_year: graduationYear,
-                bio,
-                skills,
-                achievements,
-                extracurriculars,
-                github_url: githubUrl,
-                portfolio_url: portfolioUrl,
-                project_url: projectUrl,
-                resume_url: resumeUrl,
-                avatar_url: avatarUrl,
-                certificate_url: certificateUrl,
-                updated_at: new Date().toISOString()
-            })
-                .eq("user_id", user.id);
-            if (error)
-                throw error;
-            toast.success("Profile saved successfully!");
-            setIsEditing(false);
-        }
-        catch (err) {
-            toast.error(err.message || "Failed to save profile.");
-        }
-        finally {
-            setSaving(false);
-        }
-    }
     async function handleAvatarUpload(e) {
-        const file = e.target.files?.[0];
-        if (!file || !user)
-            return;
-        setUploadingAvatar(true);
-        try {
-            const fileExt = file.name.split(".").pop();
-            const filePath = `${user.id}/${Date.now()}_avatar.${fileExt}`;
-            // Upload to avatars bucket
-            const { error: uploadError } = await supabase.storage
-                .from("avatars")
-                .upload(filePath, file, { upsert: true });
-            if (uploadError) {
-                // Fallback to simulated upload URL if storage bucket fails to resolve
-                console.warn("Storage upload failed, using simulated upload path:", uploadError.message);
-                setAvatarUrl(`https://avatar.placeholder.co/${filePath}`);
-                toast.info("Simulated profile photo upload completed.");
-            }
-            else {
-                const { data: publicUrlData } = supabase.storage
-                    .from("avatars")
-                    .getPublicUrl(filePath);
-                setAvatarUrl(publicUrlData.publicUrl);
-                toast.success("Profile photo uploaded!");
-            }
-        }
-        catch (err) {
-            toast.error(err.message || "Failed to upload avatar.");
-        }
-        finally {
-            setUploadingAvatar(false);
-        }
+  const file = e.target.files?.[0];
+  if (!file || !user) return;
+
+  setUploadingAvatar(true);
+
+  try {
+    const fileExt = file.name.split(".").pop();
+    const filePath = `${user.id}/${Date.now()}_avatar.${fileExt}`;
+
+    // 1. Upload to storage
+    const { error: uploadError } = await supabase.storage
+      .from("avatars")
+      .upload(filePath, file, { upsert: true });
+
+    if (uploadError) throw uploadError;
+
+    // 2. Get public URL (IMPORTANT)
+    const { data: publicUrlData } = supabase.storage
+      .from("avatars")
+      .getPublicUrl(filePath);
+
+    if (!publicUrlData?.publicUrl) {
+      throw new Error("Failed to generate public URL");
     }
+
+    // 3. Save URL in state
+    setAvatarUrl(publicUrlData.publicUrl);
+
+    // 4. Update DB
+    await supabase
+      .from("student_profiles")
+      .update({ avatar_url: publicUrlData.publicUrl })
+      .eq("user_id", user.id);
+
+    toast.success("Profile photo uploaded!");
+  } catch (err) {
+    toast.error(err.message || "Failed to upload avatar.");
+  } finally {
+    setUploadingAvatar(false);
+  }
+}
     async function handleResumeUpload(e) {
       const file = e.target.files?.[0];
 
       if (!file || !user) return;
+      
 
 // PDF validation
       if (file.type !== "application/pdf") {
@@ -223,6 +189,53 @@ function StudentProfilePage() {
             setUploadingResume(false);
         }
     }
+    async function handleSave(e) {
+  e.preventDefault();
+
+  if (!user) return;
+
+  if (!name || !university || !course || !yearOfStudy || !graduationYear) {
+    toast.error("Please fill required fields.");
+    return;
+  }
+
+  setSaving(true);
+
+  try {
+    const { error } = await supabase
+      .from("student_profiles")
+      .update({
+        name,
+        location,
+        university,
+        course,
+        year_of_study: yearOfStudy,
+        graduation_year: graduationYear,
+        bio,
+        skills,
+        achievements,
+        extracurriculars,
+        github_url: githubUrl,
+        portfolio_url: portfolioUrl,
+        project_url: projectUrl,
+        resume_url: resumeUrl,
+        avatar_url: avatarUrl,
+        certificate_url: certificateUrl,
+        updated_at: new Date().toISOString()
+      })
+      .eq("user_id", user.id);
+
+    if (error) throw error;
+
+    toast.success("Profile saved successfully!");
+    setIsEditing(false);
+
+  } catch (err) {
+    toast.error(err.message || "Failed to save profile.");
+  } finally {
+    setSaving(false);
+  }
+}
     async function handleCertificateUpload(e) {
         const file = e.target.files?.[0];
         if (!file || !user)
@@ -240,9 +253,14 @@ function StudentProfilePage() {
             }
             else {
                 const { data: publicUrlData } = supabase.storage
-                    .from("resumes")
-                    .getPublicUrl(filePath);
-                setCertificateUrl(filePath);
+                  .from("resumes")
+                  .getPublicUrl(filePath);
+ 
+                if (!publicUrlData?.publicUrl) {
+                  throw new Error("Failed to generate public URL");
+                }
+
+setCertificateUrl(publicUrlData.publicUrl);
                 toast.success("Certificate document uploaded!");
             }
         }
