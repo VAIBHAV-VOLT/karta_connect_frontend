@@ -221,7 +221,7 @@ function StudentProfilePage() {
         resume_url: resumeUrl,
         avatar_url: avatarUrl,
         certificate_url: certificateUrl,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq("user_id", user.id);
 
