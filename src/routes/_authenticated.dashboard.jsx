@@ -50,24 +50,18 @@ function AdminDashboard() {
   const [whitelistUni, setWhitelistUni] = useState("");
   const [whitelistCourse, setWhitelistCourse] = useState("");
   const [submittingWhitelist, setSubmittingWhitelist] = useState(false);
-  // Mock charts data
-  const registrationsData = [
-    { name: "Jan", Students: 2, Companies: 1 },
-    { name: "Feb", Students: 5, Companies: 2 },
-    { name: "Mar", Students: 8, Companies: 3 },
-    { name: "Apr", Students: 15, Companies: 5 },
-    { name: "May", Students: 25, Companies: 8 },
-    { name: "Jun", Students: 35, Companies: 12 },
-  ];
+  const [registrationsData, setRegistrationsData] = useState([]);
   async function fetchStats() {
     setLoading(true);
     try {
-      const [wl, sp, cp, jp, app] = await Promise.all([
+      const [wl, sp, cp, jp, app, studentProfilesRes, companiesRes] = await Promise.all([
         supabase.from("student_whitelist").select("id", { count: "exact", head: true }),
         supabase.from("student_profiles").select("user_id", { count: "exact", head: true }),
         supabase.from("companies").select("id", { count: "exact", head: true }),
         supabase.from("job_posts").select("id, type"),
         supabase.from("applications").select("id", { count: "exact", head: true }),
+        supabase.from("student_profiles").select("created_at"),
+        supabase.from("companies").select("created_at")
       ]);
       const jobsCount = jp.data?.filter((p) => p.type === "job").length || 0;
       const internshipsCount = jp.data?.filter((p) => p.type === "internship").length || 0;
@@ -79,6 +73,48 @@ function AdminDashboard() {
         internships: internshipsCount,
         applications: app.count || 0,
       });
+
+      // Calculate chart data for Registration Growth
+      const currentYear = new Date().getFullYear();
+      const currentMonth = new Date().getMonth(); // 0-11
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+      const countsByMonth = Array.from({ length: 12 }, (_, i) => ({
+        name: monthNames[i],
+        Students: 0,
+        Companies: 0
+      }));
+
+      studentProfilesRes.data?.forEach(profile => {
+        if (!profile.created_at) return;
+        const date = new Date(profile.created_at);
+        if (date.getFullYear() === currentYear) {
+          countsByMonth[date.getMonth()].Students += 1;
+        }
+      });
+
+      companiesRes.data?.forEach(company => {
+        if (!company.created_at) return;
+        const date = new Date(company.created_at);
+        if (date.getFullYear() === currentYear) {
+          countsByMonth[date.getMonth()].Companies += 1;
+        }
+      });
+
+      let cumulativeStudents = 0;
+      let cumulativeCompanies = 0;
+      const chartData = [];
+
+      for (let i = 0; i <= currentMonth; i++) {
+        cumulativeStudents += countsByMonth[i].Students;
+        cumulativeCompanies += countsByMonth[i].Companies;
+        chartData.push({
+          name: monthNames[i],
+          Students: cumulativeStudents,
+          Companies: cumulativeCompanies
+        });
+      }
+      setRegistrationsData(chartData);
     } catch (err) {
       console.error("Error fetching admin stats:", err);
     } finally {
@@ -191,7 +227,7 @@ function AdminDashboard() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <UserCheck className="h-5 w-5 text-primary"/> Add Student
+              <UserCheck className="h-5 w-5 text-primary" /> Add Student
             </CardTitle>
             <CardDescription>
               Authorize a student email so they can create an account.
@@ -703,11 +739,11 @@ function StudentDashboard({ userId }) {
                   // Fallback initials generator
                   const initials = c.name
                     ? c.name
-                        .split(" ")
-                        .map((w) => w[0])
-                        .slice(0, 2)
-                        .join("")
-                        .toUpperCase()
+                      .split(" ")
+                      .map((w) => w[0])
+                      .slice(0, 2)
+                      .join("")
+                      .toUpperCase()
                     : "CO";
                   return (
                     <div
