@@ -51,10 +51,11 @@ function StudentApplicationsPage() {
         rejected: "bg-destructive/10 text-destructive border-destructive/20"
     };
     const statusLabels = {
-      applied: "Applied",
-      review: "Under Review",
-      selected: "Shortlisted",
-      rejected: "Rejected"
+        applied: "Applied",
+        review: "Under Review",
+        shortlisted: "Shortlisted",
+        selected: "Selected",
+        rejected: "Rejected"
     };
     return (<div className="space-y-8 animate-in fade-in duration-500">
       <div>
@@ -63,18 +64,19 @@ function StudentApplicationsPage() {
       </div>
 
       {/* Status filter pills */}
-      <div className="flex items-center gap-2">
-        {[
-          { key: "", label: "All", style: "bg-muted" },
-          { key: "applied", label: statusLabels.applied, style: "bg-blue-50 text-blue-600" },
-          { key: "review", label: statusLabels.review, style: "bg-amber-50 text-amber-600" },
-          { key: "selected", label: statusLabels.selected, style: "bg-emerald-50 text-emerald-600" },
-          { key: "rejected", label: statusLabels.rejected, style: "bg-destructive/10 text-destructive" },
-        ].map((s) => (
-          <button key={s.key} onClick={() => setStatusFilter(prev => prev === s.key ? "" : s.key)} className={`text-xs px-3 py-1 rounded-full font-semibold border ${statusFilter === s.key ? "ring-2 ring-offset-1 ring-primary" : ""} ${s.style}`}>
-            {s.label}
-          </button>
-        ))}
+      <div className="mb-4">
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+         className="border rounded-md px-3 py-2 text-sm"
+       >
+         <option value="">All</option>
+         <option value="applied">Applied</option>
+         <option value="review">Under Review</option>
+         <option value="shortlisted">Shortlisted</option>
+         <option value="selected">Selected</option>
+         <option value="rejected">Rejected</option>
+        </select>
       </div>
 
       {apps.length === 0 ? (<Card className="border-dashed py-12 text-center max-w-xl mx-auto">
