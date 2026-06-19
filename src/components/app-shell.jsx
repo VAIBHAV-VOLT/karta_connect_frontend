@@ -8,7 +8,7 @@ const NAV = {
     student: [
         { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
         { to: "/student/profile", label: "Profile", icon: User },
-        
+        { to: "/student/progress", label: "Progress", icon: BarChart3 },
         { to: "/student/applications", label: "Applications", icon: FileText },
         { to: "/settings", label: "Settings", icon: Settings },
     ],

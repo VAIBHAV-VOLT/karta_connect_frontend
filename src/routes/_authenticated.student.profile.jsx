@@ -9,13 +9,18 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { requireStudent } from "@/lib/route-guards";
-import { Loader2, User, BookOpen, Award, FileText, Upload, X, ExternalLink } from "lucide-react";
+import { Loader2, User, BookOpen, Award, FileText, Upload, X, ExternalLink, Eye } from "lucide-react";
+import Confetti from 'react-confetti';
+import { useWindowSize } from 'react-use';
+
 export const Route = createFileRoute("/_authenticated/student/profile")({
     beforeLoad: requireStudent,
     component: StudentProfilePage,
 });
 function StudentProfilePage() {
     const { user } = useAuth();
+    const { width, height } = useWindowSize();
+    const [showConfetti, setShowConfetti] = useState(false);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [uploadingResume, setUploadingResume] = useState(false);
@@ -31,7 +36,7 @@ function StudentProfilePage() {
     const [graduationYear, setGraduationYear] = useState("");
     const [bio, setBio] = useState("");
     const [githubUrl, setGithubUrl] = useState("");
-    const [portfolioUrl, setPortfolioUrl] = useState("");
+    const [linkedinUrl, setLinkedinUrl] = useState("");
     const [projectUrl, setProjectUrl] = useState("");
     const [skills, setSkills] = useState([]);
     const [newSkill, setNewSkill] = useState("");
@@ -43,6 +48,7 @@ function StudentProfilePage() {
     const [certificateUrl, setCertificateUrl] = useState("");
     const [isEditing, setIsEditing] = useState(false);
     const [showResumePreview, setShowResumePreview] = useState(false);
+    const [showCertificatePreview, setShowCertificatePreview] = useState(false);
     useEffect(() => {
         async function loadProfile() {
             if (!user)
@@ -64,7 +70,7 @@ function StudentProfilePage() {
                     setGraduationYear(data.graduation_year || "");
                     setBio(data.bio || "");
                     setGithubUrl(data.github_url || "");
-                    setPortfolioUrl(data.portfolio_url || "");
+                    setLinkedinUrl(data.linkedin_url || "");
                     setProjectUrl(data.project_url || "");
                     setSkills(data.skills || []);
                     setAchievements(data.achievements || "");
@@ -194,8 +200,19 @@ function StudentProfilePage() {
 
   if (!user) return;
 
-  if (!name || !university || !course || !yearOfStudy || !graduationYear) {
-    toast.error("Please fill required fields.");
+  const missingRequired = [];
+  if (!name) missingRequired.push("Full Name");
+  if (!email) missingRequired.push("Contact Email");
+  if (!university) missingRequired.push("University");
+  if (!course) missingRequired.push("Course of Study");
+  if (!yearOfStudy) missingRequired.push("Year of Study");
+  if (!graduationYear) missingRequired.push("Graduation Year");
+  if (!linkedinUrl) missingRequired.push("LinkedIn Profile URL");
+  if (!resumeUrl) missingRequired.push("Resume Document");
+  if (skills.length === 0) missingRequired.push("Skills");
+
+  if (missingRequired.length > 0) {
+    toast.error(`Please fill required fields: ${missingRequired.join(', ')}`);
     return;
   }
 
@@ -216,7 +233,7 @@ function StudentProfilePage() {
         achievements,
         extracurriculars,
         github_url: githubUrl,
-        portfolio_url: portfolioUrl,
+        linkedin_url: linkedinUrl,
         project_url: projectUrl,
         resume_url: resumeUrl,
         avatar_url: avatarUrl,
@@ -230,6 +247,8 @@ function StudentProfilePage() {
     toast.success("Profile saved successfully!");
     setIsEditing(false);
 
+    setShowConfetti(true);
+    setTimeout(() => setShowConfetti(false), 5000);
   } catch (err) {
     toast.error(err.message || "Failed to save profile.");
   } finally {
@@ -281,42 +300,104 @@ setCertificateUrl(publicUrlData.publicUrl);
     function removeSkill(skill) {
         setSkills(skills.filter((s) => s !== skill));
     }
+    const getProfileProgress = () => {
+        const mandatoryFields = [
+            { name: "Full Name", value: name },
+            { name: "Contact Email", value: email },
+            { name: "University", value: university },
+            { name: "Course", value: course },
+            { name: "Year of Study", value: yearOfStudy },
+            { name: "Graduation Year", value: graduationYear },
+            { name: "LinkedIn Profile URL", value: linkedinUrl },
+            { name: "Skills", value: skills.length > 0 },
+            { name: "Resume Upload", value: resumeUrl }
+        ];
+        
+        const optionalFields = [
+            { name: "Location", value: location },
+            { name: "Bio", value: bio },
+            { name: "Achievements", value: achievements },
+            { name: "Extracurriculars", value: extracurriculars },
+            { name: "GitHub URL", value: githubUrl },
+            { name: "Project URL", value: projectUrl },
+            { name: "Profile Photo", value: avatarUrl },
+            { name: "Certificate Upload", value: certificateUrl }
+        ];
+
+        const filledMandatory = mandatoryFields.filter(f => Boolean(f.value));
+        const missingMandatory = mandatoryFields.filter(f => !Boolean(f.value)).map(f => f.name);
+        
+        const score = Math.round((filledMandatory.length / mandatoryFields.length) * 100);
+        
+        const missingOptional = optionalFields.filter(f => !Boolean(f.value)).map(f => f.name);
+
+        return { score, missingMandatory, missingOptional };
+    };
+    const { score: profileScore, missingMandatory, missingOptional } = getProfileProgress();
+
     if (loading) {
         return (<div className="flex h-[50vh] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary"/>
       </div>);
     }
-    const calculateProfileScore = () => {
-        const fields = [
-            name, email, university, course, location, bio,
-            skills.length > 0, achievements, extracurriculars,
-            avatarUrl, resumeUrl, certificateUrl
-        ];
-        const filledFields = fields.filter(Boolean).length;
-        return Math.round((filledFields / fields.length) * 100);
-    };
-    const profileScore = calculateProfileScore();
-    return (<div className="space-y-8 animate-in fade-in duration-500">
+
+
+    return (
+      <>
+        {showConfetti && <Confetti width={width} height={height} numberOfPieces={250} gravity={0.15} style={{ zIndex: 9999, position: 'fixed', top: 0, left: 0 }} />}
+        <div className="space-y-8 animate-in fade-in duration-500">
       <div>
         <h1 className="text-3xl font-extrabold tracking-tight">Edit Student Profile</h1>
         <p className="text-muted-foreground">Keep your academic and professional details updated for companies.</p>
 
         {/* Profile Completion Score */}
-        <div className="mt-6 space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="font-medium">Profile Completion</span>
-            <span className="font-bold text-primary">{profileScore}%</span>
+        {(profileScore < 100 || missingOptional.length > 0) && (
+          <div className="mt-6 space-y-2 p-4 border rounded-md bg-muted/30">
+            {profileScore < 100 ? (
+              <>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium text-foreground">Profile Completion</span>
+                  <span className="font-bold text-primary">{profileScore}%</span>
+                </div>
+                <div className="h-2.5 w-full bg-secondary rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-primary transition-all duration-500 ease-in-out"
+                    style={{ width: `${profileScore}%` }}
+                  />
+                </div>
+                <div className="text-xs text-muted-foreground mt-3">
+                  <p className="font-medium mb-1 text-foreground/80">To reach 100%, please add the required fields:</p>
+                  <ul className="list-disc pl-4 space-y-0.5 mt-1">
+                    {missingMandatory.map(field => (
+                      <li key={field}>{field}</li>
+                    ))}
+                  </ul>
+                </div>
+              </>
+            ) : (
+              <div className="text-sm mt-1">
+                <div className="flex items-center gap-3 mb-3 bg-emerald-500/10 p-3 rounded-lg border border-emerald-500/20">
+                  <div className="text-2xl animate-bounce">🎉 🌟 🎯</div>
+                  <div>
+                    <p className="font-bold text-emerald-500">Awesome! Your professional profile is 100% complete!</p>
+                    <p className="text-xs text-emerald-500/80">You're ready to start applying to top opportunities.</p>
+                  </div>
+                </div>
+                
+                {missingOptional.length > 0 && (
+                  <div className="text-xs text-muted-foreground mt-4">
+                    <p className="mb-2 text-foreground/80 font-medium text-sm">To add more impact and stand out to companies, consider adding these optional fields:</p>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {missingOptional.map(field => (
+                        <span key={field} className="px-2 py-1 bg-amber-400/10 border border-amber-400/20 text-black-400 rounded-md font-medium text-[10px] uppercase tracking-wider">{field}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-          <div className="h-2.5 w-full bg-secondary/50 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-primary transition-all duration-500 ease-in-out"
-              style={{ width: `${profileScore}%` }}
-            />
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Complete your profile to stand out to more companies!
-          </p>
-        </div>
+        )}
       </div>
       <form onSubmit={handleSave} className="space-y-6">
 
@@ -386,7 +467,7 @@ setCertificateUrl(publicUrlData.publicUrl);
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="stud-email">Contact Email</Label>
+                <Label htmlFor="stud-email">Contact Email <span className="text-destructive">*</span></Label>
                 <Input id="stud-email" type="email" value={email} disabled className="bg-muted cursor-not-allowed"/>
               </div>
               <div className="grid gap-2">
@@ -470,14 +551,14 @@ setCertificateUrl(publicUrlData.publicUrl);
             <CardTitle className="flex items-center gap-2">
               <ExternalLink className="h-5 w-5 text-primary"/> External Links
             </CardTitle>
-            <CardDescription>Optional GitHub, portfolio, and project URLs.</CardDescription>
+            <CardDescription>GitHub, Project URLs, and required LinkedIn Profile.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="stud-github">GitHub URL</Label>
               <Input
                 id="stud-github"
-                type="url"
+                type="text"
                 placeholder="https://github.com/username"
                 value={githubUrl}
                 onChange={(e) => setGithubUrl(e.target.value)}
@@ -485,13 +566,13 @@ setCertificateUrl(publicUrlData.publicUrl);
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="stud-portfolio">Portfolio URL</Label>
+              <Label htmlFor="stud-linkedin">LinkedIn Profile URL <span className="text-destructive">*</span></Label>
               <Input
-                id="stud-portfolio"
-                type="url"
-                placeholder="https://portfolio.example.com"
-                value={portfolioUrl}
-                onChange={(e) => setPortfolioUrl(e.target.value)}
+                id="stud-linkedin"
+                type="text"
+                placeholder="https://linkedin.com/in/username"
+                value={linkedinUrl}
+                onChange={(e) => setLinkedinUrl(e.target.value)}
                 disabled={!isEditing}
               />
             </div>
@@ -499,7 +580,7 @@ setCertificateUrl(publicUrlData.publicUrl);
               <Label htmlFor="stud-project">Project URL</Label>
               <Input
                 id="stud-project"
-                type="url"
+                type="text"
                 placeholder="https://project.example.com"
                 value={projectUrl}
                 onChange={(e) => setProjectUrl(e.target.value)}
@@ -520,7 +601,7 @@ setCertificateUrl(publicUrlData.publicUrl);
           <CardContent className="space-y-6">
             {/* Skills */}
             <div className="space-y-2">
-              <Label htmlFor="stud-skills">Add Skills</Label>
+              <Label htmlFor="stud-skills">Add Skills <span className="text-destructive">*</span></Label>
               <div className="flex gap-2">
                 <Input
                   id="stud-skills"
@@ -559,7 +640,7 @@ setCertificateUrl(publicUrlData.publicUrl);
             {/* Resume Upload */}
             <div className="space-y-2 border-t pt-4">
               <div>
-                <Label>Resume Document</Label>
+                <Label>Resume Document <span className="text-destructive">*</span></Label>
                 <p className="text-xs text-muted-foreground mt-1">
                   Accepted format: PDF only • Maximum file size: 5 MB
                 </p>
@@ -642,9 +723,26 @@ setCertificateUrl(publicUrlData.publicUrl);
                   <Upload className="h-4 w-4"/> {uploadingCertificate ? "Uploading..." : "Upload Certificate (PDF)"}
                 </Label>
                 <input id="cert-file" type="file" accept=".pdf" onChange={handleCertificateUpload} className="hidden"/>
-                {certificateUrl && (<span className="text-xs text-muted-foreground flex items-center gap-1.5">
-                    <FileText className="h-4 w-4 text-primary"/> Certificate uploaded
-                  </span>)}
+                {certificateUrl && (
+                  <div className="flex items-center gap-4">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <FileText className="h-4 w-4 text-primary"/> Certificate uploaded
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setShowCertificatePreview(true);
+                      }}
+                      className="h-8 text-xs flex items-center gap-2"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      Preview
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>
@@ -679,5 +777,29 @@ setCertificateUrl(publicUrlData.publicUrl);
           </div>
         </div>
       )}
-    </div>);
+
+      {/* Certificate Preview Modal */}
+      {!certificateUrl || !showCertificatePreview ? null : (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowCertificatePreview(false)} />
+          <div className="relative w-full max-w-4xl h-[90vh] bg-background rounded-lg shadow-lg overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="font-bold text-lg">Certificate Preview</h3>
+              <button
+                onClick={() => setShowCertificatePreview(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <iframe
+              src={certificateUrl}
+              className="w-full h-full"
+              title="Certificate Preview"
+            />
+          </div>
+        </div>
+      )}
+    </div>
+    </>);
 }
