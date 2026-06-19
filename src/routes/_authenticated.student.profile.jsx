@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { requireStudent } from "@/lib/route-guards";
-import { Loader2, User, BookOpen, Award, FileText, Upload, X, ExternalLink, Eye } from "lucide-react";
+import { Loader2, User, BookOpen, Award, FileText, Upload, X, ExternalLink, Eye, Briefcase } from "lucide-react";
 import Confetti from 'react-confetti';
 import { useWindowSize } from 'react-use';
 
@@ -26,6 +26,7 @@ function StudentProfilePage() {
     const [uploadingResume, setUploadingResume] = useState(false);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
     const [uploadingCertificate, setUploadingCertificate] = useState(false);
+    const [extractingSkills, setExtractingSkills] = useState(false);
     // Form states
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
@@ -40,12 +41,14 @@ function StudentProfilePage() {
     const [projectUrl, setProjectUrl] = useState("");
     const [skills, setSkills] = useState([]);
     const [newSkill, setNewSkill] = useState("");
-    const [achievements, setAchievements] = useState("");
+    const [achievements, setAchievements] = useState([]);
     const [extracurriculars, setExtracurriculars] = useState("");
     const [resumeUrl, setResumeUrl] = useState("");
     const [resumeDownloadUrl, setResumeDownloadUrl] = useState(null);
     const [avatarUrl, setAvatarUrl] = useState("");
     const [certificateUrl, setCertificateUrl] = useState("");
+    const [projects, setProjects] = useState([]);
+    const [uploadingProjectPhotos, setUploadingProjectPhotos] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [showResumePreview, setShowResumePreview] = useState(false);
     const [showCertificatePreview, setShowCertificatePreview] = useState(false);
@@ -73,11 +76,27 @@ function StudentProfilePage() {
                     setLinkedinUrl(data.linkedin_url || "");
                     setProjectUrl(data.project_url || "");
                     setSkills(data.skills || []);
-                    setAchievements(data.achievements || "");
+                    
+                    let loadedAchievements = [];
+                    if (data.achievements) {
+                        try {
+                            const parsed = JSON.parse(data.achievements);
+                            if (Array.isArray(parsed)) {
+                                loadedAchievements = parsed;
+                            } else {
+                                loadedAchievements = [{ id: crypto.randomUUID(), title: "Achievement", description: data.achievements, certificateUrl: data.certificate_url || null }];
+                            }
+                        } catch (e) {
+                            loadedAchievements = [{ id: crypto.randomUUID(), title: "Achievement", description: data.achievements, certificateUrl: data.certificate_url || null }];
+                        }
+                    }
+                    setAchievements(loadedAchievements);
+                    
                     setExtracurriculars(data.extracurriculars || "");
                     setResumeUrl(data.resume_url || "");
                     setAvatarUrl(data.avatar_url || "");
                     setCertificateUrl(data.certificate_url || "");
+                    setProjects(data.projects || []);
                 }
             }
             catch (err) {
@@ -195,6 +214,61 @@ function StudentProfilePage() {
             setUploadingResume(false);
         }
     }
+
+    async function extractSkillsWithAI() {
+        if (!resumeUrl || !user) {
+            toast.error("Please upload a resume first.");
+            return;
+        }
+
+        setExtractingSkills(true);
+        try {
+            const { data: session } = await supabase.auth.getSession();
+            const token = session?.session?.access_token;
+            if (!token) throw new Error("No access token available.");
+
+            // Use the environment variable or fallback
+            const apiUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3001";
+
+            const res = await fetch(`${apiUrl}/api/student/extract-skills`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ resumeUrl })
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.error || "Failed to extract skills");
+            }
+
+            if (data.skills && Array.isArray(data.skills)) {
+                // Merge new skills uniquely
+                setSkills(prev => {
+                    const existing = new Set(prev.map(s => s.toLowerCase()));
+                    const combined = [...prev];
+                    data.skills.forEach(skill => {
+                        const trimmed = skill.trim();
+                        if (trimmed && !existing.has(trimmed.toLowerCase())) {
+                            combined.push(trimmed);
+                            existing.add(trimmed.toLowerCase());
+                        }
+                    });
+                    return combined;
+                });
+                toast.success(`Successfully extracted ${data.skills.length} skills!`);
+                setIsEditing(true); // Automatically switch to edit mode so they can see/save it
+            }
+        } catch (err) {
+            console.error("Extraction error:", err);
+            toast.error(err.message || "Failed to extract skills from resume.");
+        } finally {
+            setExtractingSkills(false);
+        }
+    }
+
     async function handleSave(e) {
   e.preventDefault();
 
@@ -230,11 +304,12 @@ function StudentProfilePage() {
         graduation_year: graduationYear,
         bio,
         skills,
-        achievements,
+        achievements: JSON.stringify(achievements),
         extracurriculars,
         github_url: githubUrl,
         linkedin_url: linkedinUrl,
         project_url: projectUrl,
+        projects: projects,
         resume_url: resumeUrl,
         avatar_url: avatarUrl,
         certificate_url: certificateUrl,
@@ -300,6 +375,101 @@ setCertificateUrl(publicUrlData.publicUrl);
     function removeSkill(skill) {
         setSkills(skills.filter((s) => s !== skill));
     }
+
+    async function handleProjectPhotoUpload(e, projectId) {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0 || !user) return;
+
+        setUploadingProjectPhotos(projectId);
+        const uploadedUrls = [];
+
+        try {
+            for (const file of files) {
+                const filePath = `${user.id}/projects/${Date.now()}_${file.name}`;
+                const { error: uploadError } = await supabase.storage
+                    .from("avatars")
+                    .upload(filePath, file, { upsert: true });
+
+                if (uploadError) throw uploadError;
+
+                const { data: publicUrlData } = supabase.storage
+                    .from("avatars")
+                    .getPublicUrl(filePath);
+
+                if (publicUrlData?.publicUrl) {
+                    uploadedUrls.push(publicUrlData.publicUrl);
+                }
+            }
+            
+            setProjects(prev => prev.map(p => p.id === projectId ? { ...p, photos: [...(p.photos || []), ...uploadedUrls] } : p));
+            toast.success(`${uploadedUrls.length} photos uploaded!`);
+        } catch (err) {
+            toast.error(err.message || "Failed to upload photos.");
+        } finally {
+            setUploadingProjectPhotos(null);
+        }
+    }
+
+    function addAchievement() {
+        setAchievements(prev => [...prev, { id: crypto.randomUUID(), title: "", description: "", certificateUrl: null }]);
+    }
+    function updateAchievement(id, field, value) {
+        setAchievements(prev => prev.map(a => a.id === id ? { ...a, [field]: value } : a));
+    }
+    function removeAchievement(id) {
+        setAchievements(prev => prev.filter(a => a.id !== id));
+    }
+    async function handleAchievementCertificateUpload(e, achievementId) {
+        const file = e.target.files?.[0];
+        if (!file || !user) return;
+
+        setUploadingCertificate(true);
+        try {
+            const filePath = `${user.id}/achievements/${Date.now()}_cert_${file.name}`;
+            const { error: uploadError } = await supabase.storage
+                .from("resumes")
+                .upload(filePath, file, { upsert: true });
+
+            if (uploadError) throw uploadError;
+
+            const { data: publicUrlData } = supabase.storage
+                .from("resumes")
+                .getPublicUrl(filePath);
+
+            if (publicUrlData?.publicUrl) {
+                updateAchievement(achievementId, "certificateUrl", publicUrlData.publicUrl);
+                toast.success("Certificate uploaded!");
+            }
+        } catch (err) {
+            toast.error(err.message || "Failed to upload certificate.");
+        } finally {
+            setUploadingCertificate(false);
+        }
+    }
+
+    function addProject() {
+        setProjects(prev => [...prev, { id: crypto.randomUUID(), name: "", startDate: "", endDate: "", ongoing: false, impact: "", learning: "", link: "", photos: [] }]);
+    }
+
+    function updateProject(id, field, value) {
+        setProjects(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p));
+    }
+
+    function removeProject(id) {
+        setProjects(prev => prev.filter(p => p.id !== id));
+    }
+
+    function removeProjectPhoto(projectId, photoIndex) {
+        setProjects(prev => prev.map(p => {
+            if (p.id === projectId) {
+                const newPhotos = [...p.photos];
+                newPhotos.splice(photoIndex, 1);
+                return { ...p, photos: newPhotos };
+            }
+            return p;
+        }));
+    }
+
     const getProfileProgress = () => {
         const mandatoryFields = [
             { name: "Full Name", value: name },
@@ -316,12 +486,11 @@ setCertificateUrl(publicUrlData.publicUrl);
         const optionalFields = [
             { name: "Location", value: location },
             { name: "Bio", value: bio },
-            { name: "Achievements", value: achievements },
+            { name: "Achievements", value: achievements && achievements.length > 0 },
             { name: "Extracurriculars", value: extracurriculars },
             { name: "GitHub URL", value: githubUrl },
             { name: "Project URL", value: projectUrl },
-            { name: "Profile Photo", value: avatarUrl },
-            { name: "Certificate Upload", value: certificateUrl }
+            { name: "Profile Photo", value: avatarUrl }
         ];
 
         const filledMandatory = mandatoryFields.filter(f => Boolean(f.value));
@@ -621,7 +790,22 @@ setCertificateUrl(publicUrlData.publicUrl);
                     Add
                   </Button>
                 )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={extractSkillsWithAI}
+                  disabled={extractingSkills}
+                  className="flex items-center gap-2 border-purple-500/30 bg-purple-500/5 hover:bg-purple-500/10 text-purple-600"
+                >
+                  {extractingSkills ? <Loader2 className="h-4 w-4 animate-spin" /> : "✨"}
+                  {extractingSkills ? "Extracting..." : "Extract with AI"}
+                </Button>
               </div>
+              {!resumeUrl && (
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                  <span className="text-amber-500">⚠</span> Please upload a resume below to use AI extraction.
+                </p>
+              )}
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {skills.length === 0 ? (<span className="text-xs text-muted-foreground">No skills added yet.</span>) : (skills.map((skill) => (<span key={skill} className="inline-flex items-center gap-1 bg-muted px-2.5 py-1 rounded-full text-xs font-medium capitalize">
                       {skill}
@@ -658,7 +842,7 @@ setCertificateUrl(publicUrlData.publicUrl);
     </span>
 
     {resumeDownloadUrl ? (
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-center">
         <button
           type="button"
           onClick={() => setShowResumePreview(true)}
@@ -666,6 +850,7 @@ setCertificateUrl(publicUrlData.publicUrl);
         >
           Preview
         </button>
+        <span className="text-muted-foreground">•</span>
         <a
           href={resumeDownloadUrl}
           download
@@ -692,20 +877,88 @@ setCertificateUrl(publicUrlData.publicUrl);
             </CardTitle>
             <CardDescription>Optional descriptions to improve employer interest.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-2">
-              <Label htmlFor="stud-ach">Achievements & Certificates</Label>
-              <textarea
-                id="stud-ach"
-                placeholder="List major contest placements, certified credentials..."
-                value={achievements}
-                onChange={(e) => setAchievements(e.target.value)}
-                disabled={!isEditing}
-                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              />
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <Label className="text-base font-bold">Achievements & Certificates</Label>
+                {isEditing && (
+                  <Button type="button" variant="outline" size="sm" onClick={addAchievement}>
+                    + Add Achievement
+                  </Button>
+                )}
+              </div>
+              
+              {achievements.length === 0 && (
+                <p className="text-sm text-muted-foreground italic">No achievements added yet.</p>
+              )}
+
+              {achievements.map((ach, index) => (
+                <div key={ach.id} className="relative border rounded-md p-4 space-y-4 bg-muted/20">
+                  {isEditing && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-2 right-2 h-6 w-6 text-destructive hover:bg-destructive/10"
+                      onClick={() => removeAchievement(ach.id)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                  <div className="grid gap-2 pr-8">
+                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Title</Label>
+                    <Input
+                      placeholder="e.g. 1st Place Hackathon, AWS Certified Developer"
+                      value={ach.title}
+                      onChange={(e) => updateAchievement(ach.id, "title", e.target.value)}
+                      disabled={!isEditing}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Description</Label>
+                    <textarea
+                      placeholder="Briefly describe your role, what you built, or how you earned it..."
+                      value={ach.description}
+                      onChange={(e) => updateAchievement(ach.id, "description", e.target.value)}
+                      disabled={!isEditing}
+                      className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    />
+                  </div>
+                  <div className="space-y-2 pt-2 border-t border-dashed border-input">
+                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Certificate</Label>
+                    <div className="flex items-center gap-4">
+                      {isEditing && (
+                        <>
+                          <Label htmlFor={`cert-${ach.id}`} className="cursor-pointer border border-input hover:bg-muted px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-2">
+                            <Upload className="h-3.5 w-3.5"/> {uploadingCertificate ? "Uploading..." : "Upload PDF/Image"}
+                          </Label>
+                          <input id={`cert-${ach.id}`} type="file" accept=".pdf,image/*" onChange={(e) => handleAchievementCertificateUpload(e, ach.id)} className="hidden"/>
+                        </>
+                      )}
+                      
+                      {ach.certificateUrl && (
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <FileText className="h-3.5 w-3.5 text-primary"/> Uploaded
+                          </span>
+                          <a
+                            href={ach.certificateUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+                          >
+                            <ExternalLink className="h-3 w-3" /> View
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="stud-extra">Extracurricular Activities</Label>
+
+            <div className="grid gap-2 pt-4 border-t">
+              <Label htmlFor="stud-extra" className="text-base font-bold">Extracurricular Activities</Label>
               <textarea
                 id="stud-extra"
                 placeholder="Clubs, associations, sports, volunteering..."
@@ -715,36 +968,154 @@ setCertificateUrl(publicUrlData.publicUrl);
                 className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               />
             </div>
-            {/* Certificate Upload */}
-            <div className="space-y-2 border-t pt-4">
-              <Label>Upload Certificate</Label>
-              <div className="flex items-center gap-4">
-                <Label htmlFor="cert-file" className="cursor-pointer border border-input hover:bg-muted px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2">
-                  <Upload className="h-4 w-4"/> {uploadingCertificate ? "Uploading..." : "Upload Certificate (PDF)"}
-                </Label>
-                <input id="cert-file" type="file" accept=".pdf" onChange={handleCertificateUpload} className="hidden"/>
-                {certificateUrl && (
-                  <div className="flex items-center gap-4">
-                    <span className="text-xs text-muted-foreground flex items-center gap-1.5">
-                      <FileText className="h-4 w-4 text-primary"/> Certificate uploaded
-                    </span>
-                    <Button
+          </CardContent>
+        </Card>
+
+        {/* Project Showcase Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Briefcase className="h-5 w-5 text-primary" /> Project Showcase
+            </CardTitle>
+            <CardDescription>Add your projects to demonstrate your skills and impact.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {projects.length === 0 && !isEditing ? (
+              <span className="text-xs text-muted-foreground">No projects added yet.</span>
+            ) : (
+              projects.map((project, index) => (
+                <div key={project.id} className="p-4 border rounded-md relative space-y-4 bg-muted/20">
+                  {isEditing && (
+                    <button
                       type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setShowCertificatePreview(true);
-                      }}
-                      className="h-8 text-xs flex items-center gap-2"
+                      onClick={() => removeProject(project.id)}
+                      className="absolute top-2 right-2 text-destructive hover:bg-destructive/10 p-1.5 rounded transition-colors"
                     >
-                      <Eye className="h-3.5 w-3.5" />
-                      Preview
-                    </Button>
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                  
+                  <div className="grid gap-2">
+                    <Label>Project Name <span className="text-destructive">*</span></Label>
+                    <Input
+                      value={project.name || ""}
+                      onChange={(e) => updateProject(project.id, "name", e.target.value)}
+                      disabled={!isEditing}
+                      placeholder="e.g. AI Career Predictor"
+                    />
                   </div>
-                )}
-              </div>
-            </div>
+                  
+                  <div className="grid gap-2">
+                    <Label>Timeline</Label>
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <div className="flex-1 space-y-1">
+                        <Label className="text-xs text-muted-foreground">Start Date</Label>
+                        <Input
+                          type="month"
+                          value={project.startDate || ""}
+                          onChange={(e) => updateProject(project.id, "startDate", e.target.value)}
+                          disabled={!isEditing}
+                        />
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        <Label className="text-xs text-muted-foreground">End Date</Label>
+                        <Input
+                          type="month"
+                          value={project.endDate || ""}
+                          onChange={(e) => updateProject(project.id, "endDate", e.target.value)}
+                          disabled={!isEditing || project.ongoing}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <input
+                        type="checkbox"
+                        id={`ongoing-${project.id}`}
+                        checked={project.ongoing || false}
+                        onChange={(e) => {
+                          updateProject(project.id, "ongoing", e.target.checked);
+                          if (e.target.checked) updateProject(project.id, "endDate", "");
+                        }}
+                        disabled={!isEditing}
+                        className="rounded border-input text-primary focus:ring-primary w-4 h-4 cursor-pointer disabled:cursor-not-allowed"
+                      />
+                      <Label htmlFor={`ongoing-${project.id}`} className="text-sm font-normal cursor-pointer text-muted-foreground">Project is currently ongoing</Label>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label>Impact / Results</Label>
+                    <textarea
+                      value={project.impact || ""}
+                      onChange={(e) => updateProject(project.id, "impact", e.target.value)}
+                      disabled={!isEditing}
+                      placeholder="What was the measurable outcome?"
+                      className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label>Key Learnings</Label>
+                    <textarea
+                      value={project.learning || ""}
+                      onChange={(e) => updateProject(project.id, "learning", e.target.value)}
+                      disabled={!isEditing}
+                      placeholder="What did you learn from this project?"
+                      className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label>Project Link / URL</Label>
+                    <Input
+                      value={project.link || ""}
+                      onChange={(e) => updateProject(project.id, "link", e.target.value)}
+                      disabled={!isEditing}
+                      placeholder="https://github.com/..."
+                    />
+                  </div>
+
+                  {/* Project Photos */}
+                  <div className="space-y-2 border-t pt-4">
+                    <Label>Project Photos (Screenshots)</Label>
+                    {isEditing && (
+                      <div className="flex items-center gap-4 mb-2">
+                        <Label className="cursor-pointer border border-input hover:bg-muted px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2">
+                          <Upload className="h-4 w-4"/> {uploadingProjectPhotos === project.id ? "Uploading..." : "Upload Photos"}
+                          <input type="file" accept="image/*" multiple onChange={(e) => handleProjectPhotoUpload(e, project.id)} className="hidden" disabled={uploadingProjectPhotos === project.id} />
+                        </Label>
+                      </div>
+                    )}
+                    {project.photos && project.photos.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {project.photos.map((url, i) => (
+                          <div key={i} className="relative w-16 h-16 rounded border overflow-hidden">
+                            <img src={url} alt="project screenshot" className="w-full h-full object-cover" />
+                            {isEditing && (
+                              <button
+                                type="button"
+                                onClick={() => removeProjectPhoto(project.id, i)}
+                                className="absolute top-0 right-0 bg-destructive/80 text-white p-0.5 rounded-bl hover:bg-destructive"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">No photos uploaded.</span>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+
+            {isEditing && (
+              <Button type="button" variant="outline" onClick={addProject} className="w-full border-dashed flex items-center gap-2">
+                <Briefcase className="h-4 w-4" /> + Add Another Project
+              </Button>
+            )}
           </CardContent>
         </Card>
 
