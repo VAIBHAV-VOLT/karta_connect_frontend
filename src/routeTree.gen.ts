@@ -22,9 +22,11 @@ import { Route as AuthenticatedStudentsIdRouteImport } from './routes/_authentic
 import { Route as AuthenticatedStudentSavedRouteImport } from './routes/_authenticated.student.saved'
 import { Route as AuthenticatedStudentProfileRouteImport } from './routes/_authenticated.student.profile'
 import { Route as AuthenticatedStudentApplicationsRouteImport } from './routes/_authenticated.student.applications'
+import { Route as AuthenticatedCompanyScholarsRouteImport } from './routes/_authenticated.company.scholars'
 import { Route as AuthenticatedCompanyProfileRouteImport } from './routes/_authenticated.company.profile'
 import { Route as AuthenticatedCompanyPostsRouteImport } from './routes/_authenticated.company.posts'
 import { Route as AuthenticatedCompanyApplicationsRouteImport } from './routes/_authenticated.company.applications'
+import { Route as AuthenticatedAdminModerationRouteImport } from './routes/_authenticated.admin.moderation'
 import { Route as AuthenticatedAdminAnalyticsRouteImport } from './routes/_authenticated.admin.analytics'
 import { Route as AuthenticatedStudentJobsIndexRouteImport } from './routes/_authenticated.student.jobs.index'
 import { Route as AuthenticatedAdminStudentsIndexRouteImport } from './routes/_authenticated.admin.students.index'
@@ -102,6 +104,12 @@ const AuthenticatedStudentApplicationsRoute =
     path: '/student/applications',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedCompanyScholarsRoute =
+  AuthenticatedCompanyScholarsRouteImport.update({
+    id: '/company/scholars',
+    path: '/company/scholars',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedCompanyProfileRoute =
   AuthenticatedCompanyProfileRouteImport.update({
     id: '/company/profile',
@@ -118,6 +126,12 @@ const AuthenticatedCompanyApplicationsRoute =
   AuthenticatedCompanyApplicationsRouteImport.update({
     id: '/company/applications',
     path: '/company/applications',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAdminModerationRoute =
+  AuthenticatedAdminModerationRouteImport.update({
+    id: '/admin/moderation',
+    path: '/admin/moderation',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedAdminAnalyticsRoute =
@@ -185,9 +199,11 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
+  '/admin/moderation': typeof AuthenticatedAdminModerationRoute
   '/company/applications': typeof AuthenticatedCompanyApplicationsRoute
   '/company/posts': typeof AuthenticatedCompanyPostsRoute
   '/company/profile': typeof AuthenticatedCompanyProfileRoute
+  '/company/scholars': typeof AuthenticatedCompanyScholarsRoute
   '/student/applications': typeof AuthenticatedStudentApplicationsRoute
   '/student/profile': typeof AuthenticatedStudentProfileRoute
   '/student/saved': typeof AuthenticatedStudentSavedRoute
@@ -211,9 +227,11 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
+  '/admin/moderation': typeof AuthenticatedAdminModerationRoute
   '/company/applications': typeof AuthenticatedCompanyApplicationsRoute
   '/company/posts': typeof AuthenticatedCompanyPostsRoute
   '/company/profile': typeof AuthenticatedCompanyProfileRoute
+  '/company/scholars': typeof AuthenticatedCompanyScholarsRoute
   '/student/applications': typeof AuthenticatedStudentApplicationsRoute
   '/student/profile': typeof AuthenticatedStudentProfileRoute
   '/student/saved': typeof AuthenticatedStudentSavedRoute
@@ -239,9 +257,11 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
+  '/_authenticated/admin/moderation': typeof AuthenticatedAdminModerationRoute
   '/_authenticated/company/applications': typeof AuthenticatedCompanyApplicationsRoute
   '/_authenticated/company/posts': typeof AuthenticatedCompanyPostsRoute
   '/_authenticated/company/profile': typeof AuthenticatedCompanyProfileRoute
+  '/_authenticated/company/scholars': typeof AuthenticatedCompanyScholarsRoute
   '/_authenticated/student/applications': typeof AuthenticatedStudentApplicationsRoute
   '/_authenticated/student/profile': typeof AuthenticatedStudentProfileRoute
   '/_authenticated/student/saved': typeof AuthenticatedStudentSavedRoute
@@ -267,9 +287,11 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/settings'
     | '/admin/analytics'
+    | '/admin/moderation'
     | '/company/applications'
     | '/company/posts'
     | '/company/profile'
+    | '/company/scholars'
     | '/student/applications'
     | '/student/profile'
     | '/student/saved'
@@ -293,9 +315,11 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/settings'
     | '/admin/analytics'
+    | '/admin/moderation'
     | '/company/applications'
     | '/company/posts'
     | '/company/profile'
+    | '/company/scholars'
     | '/student/applications'
     | '/student/profile'
     | '/student/saved'
@@ -320,9 +344,11 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/settings'
     | '/_authenticated/admin/analytics'
+    | '/_authenticated/admin/moderation'
     | '/_authenticated/company/applications'
     | '/_authenticated/company/posts'
     | '/_authenticated/company/profile'
+    | '/_authenticated/company/scholars'
     | '/_authenticated/student/applications'
     | '/_authenticated/student/profile'
     | '/_authenticated/student/saved'
@@ -440,6 +466,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStudentApplicationsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/company/scholars': {
+      id: '/_authenticated/company/scholars'
+      path: '/company/scholars'
+      fullPath: '/company/scholars'
+      preLoaderRoute: typeof AuthenticatedCompanyScholarsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/company/profile': {
       id: '/_authenticated/company/profile'
       path: '/company/profile'
@@ -459,6 +492,13 @@ declare module '@tanstack/react-router' {
       path: '/company/applications'
       fullPath: '/company/applications'
       preLoaderRoute: typeof AuthenticatedCompanyApplicationsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/admin/moderation': {
+      id: '/_authenticated/admin/moderation'
+      path: '/admin/moderation'
+      fullPath: '/admin/moderation'
+      preLoaderRoute: typeof AuthenticatedAdminModerationRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/admin/analytics': {
@@ -531,9 +571,11 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedAdminAnalyticsRoute: typeof AuthenticatedAdminAnalyticsRoute
+  AuthenticatedAdminModerationRoute: typeof AuthenticatedAdminModerationRoute
   AuthenticatedCompanyApplicationsRoute: typeof AuthenticatedCompanyApplicationsRoute
   AuthenticatedCompanyPostsRoute: typeof AuthenticatedCompanyPostsRoute
   AuthenticatedCompanyProfileRoute: typeof AuthenticatedCompanyProfileRoute
+  AuthenticatedCompanyScholarsRoute: typeof AuthenticatedCompanyScholarsRoute
   AuthenticatedStudentApplicationsRoute: typeof AuthenticatedStudentApplicationsRoute
   AuthenticatedStudentProfileRoute: typeof AuthenticatedStudentProfileRoute
   AuthenticatedStudentSavedRoute: typeof AuthenticatedStudentSavedRoute
@@ -552,9 +594,11 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedAdminAnalyticsRoute: AuthenticatedAdminAnalyticsRoute,
+  AuthenticatedAdminModerationRoute: AuthenticatedAdminModerationRoute,
   AuthenticatedCompanyApplicationsRoute: AuthenticatedCompanyApplicationsRoute,
   AuthenticatedCompanyPostsRoute: AuthenticatedCompanyPostsRoute,
   AuthenticatedCompanyProfileRoute: AuthenticatedCompanyProfileRoute,
+  AuthenticatedCompanyScholarsRoute: AuthenticatedCompanyScholarsRoute,
   AuthenticatedStudentApplicationsRoute: AuthenticatedStudentApplicationsRoute,
   AuthenticatedStudentProfileRoute: AuthenticatedStudentProfileRoute,
   AuthenticatedStudentSavedRoute: AuthenticatedStudentSavedRoute,

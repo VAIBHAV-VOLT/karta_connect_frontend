@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, User, Briefcase, GraduationCap, FileText, Settings, LogOut, Building2, Users, ClipboardList, Sun, Moon, Bookmark, BarChart3, } from "lucide-react";
+import { LayoutDashboard, User, Briefcase, GraduationCap, FileText, Settings, LogOut, Building2, Users, ClipboardList, Sun, Moon, Bookmark, BarChart3, ShieldAlert } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, SidebarFooter, } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { signOut, useAuth } from "@/hooks/use-auth";
@@ -26,6 +26,7 @@ const NAV = {
         { to: "/admin/students", label: "Students", icon: Users },
         { to: "/admin/companies", label: "Companies", icon: Building2 },
         { to: "/admin/posts", label: "Postings", icon: Briefcase },
+        { to: "/admin/moderation", label: "Moderation", icon: ShieldAlert },
         { to: "/settings", label: "Settings", icon: Settings },
     ],
 };
