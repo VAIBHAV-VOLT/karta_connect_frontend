@@ -26,6 +26,8 @@ function StudentJobsPage() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedJob, setSelectedJob] = useState(null);
+    const [gettingAiMatch, setGettingAiMatch] = useState(false);
+    const [aiRecommendations, setAiRecommendations] = useState(null);
     // Load jobs matching the search filters and the current student's applications
     async function loadJobs() {
         setLoading(true);
@@ -74,6 +76,36 @@ function StudentJobsPage() {
     useEffect(() => {
         loadJobs();
     }, [searchParams.type, user]);
+
+    async function getAiRecommendations() {
+        if (!user) return;
+        setGettingAiMatch(true);
+        try {
+            const { data: session } = await supabase.auth.getSession();
+            const token = session?.session?.access_token;
+            if (!token) throw new Error("No access token available.");
+
+            const apiUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3001";
+            const res = await fetch(`${apiUrl}/api/student/recommendations`, {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Failed to get AI recommendations");
+
+            setAiRecommendations(data.recommendations || []);
+            toast.success("AI matched your profile with opportunities!");
+        } catch (err) {
+            console.error("AI Match Error:", err);
+            toast.error(err.message || "Failed to get recommendations.");
+        } finally {
+            setGettingAiMatch(false);
+        }
+    }
+
     const filteredJobs = jobs.filter((job) => {
         const query = searchQuery.toLowerCase().trim();
         if (!query)
@@ -95,15 +127,71 @@ function StudentJobsPage() {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"/>
           <Input placeholder="Search by role, company, or skills..." className="pl-10" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}/>
         </div>
-        <Button onClick={loadJobs} variant="outline" className="flex items-center gap-2">
-          <Filter className="h-4 w-4"/> Refresh
-        </Button>
+        <div className="flex gap-2">
+            <Button 
+              onClick={getAiRecommendations} 
+              disabled={gettingAiMatch}
+              className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:opacity-90 text-white font-bold border-0"
+            >
+              {gettingAiMatch ? <Loader2 className="h-4 w-4 animate-spin" /> : "✨"}
+              {gettingAiMatch ? "Matching..." : "AI Match"}
+            </Button>
+            <Button onClick={loadJobs} variant="outline" className="flex items-center gap-2">
+              <Filter className="h-4 w-4"/> Refresh
+            </Button>
+        </div>
       </div>
+
+      {/* AI Recommendations Section */}
+      {aiRecommendations && aiRecommendations.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-xl font-bold flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500">
+            ✨ Top AI Matches for You
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {aiRecommendations.slice(0, 3).map((job) => (
+              <Card key={`ai-${job.id}`} className="flex flex-col hover:shadow-md transition-shadow cursor-pointer border-purple-500/30 bg-purple-500/5" onClick={() => setSelectedJob({...job, company: job.companies || job.company})}>
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="h-10 w-10 border rounded bg-background flex items-center justify-center overflow-hidden shrink-0">
+                      {(job.companies?.logo_url || job.company?.logo_url) ? (<img src={job.companies?.logo_url || job.company?.logo_url} alt={job.companies?.name || job.company?.name} className="h-full w-full object-cover"/>) : (<Briefcase className="h-5 w-5 text-muted-foreground"/>)}
+                    </div>
+                    <div className="space-y-1 text-right flex flex-col items-end">
+                      <span className={`text-[10px] border px-2 py-0.5 rounded-full uppercase font-bold tracking-wider ${job.type === "job" ? "bg-blue-500/10 text-blue-500 border-blue-500/20" : "bg-purple-500/10 text-purple-500 border-purple-500/20"}`}>
+                        {job.type}
+                      </span>
+                      <span className="text-[10px] bg-green-500/10 text-green-600 border border-green-500/20 px-2 py-0.5 rounded-full font-bold">
+                        {job.matchScore}% Match
+                      </span>
+                    </div>
+                  </div>
+                  <CardTitle className="text-lg font-bold mt-3 line-clamp-1">{job.title}</CardTitle>
+                  <CardDescription className="text-xs line-clamp-1">{job.companies?.name || job.company?.name || "Company partner"}</CardDescription>
+                </CardHeader>
+                <CardContent className="pb-3 flex-1">
+                  <p className="text-xs text-muted-foreground line-clamp-3 mb-4">{job.description}</p>
+                </CardContent>
+                <CardFooter className="pt-0 border-t border-purple-500/10 mt-auto flex items-center justify-between py-3 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <MapPin className="h-3 w-3"/>
+                    <span className="line-clamp-1 max-w-[120px]">{job.location || "Remote"}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3"/>
+                    <span>Due: {job.deadline}</span>
+                  </div>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+          <hr className="my-6 border-dashed" />
+        </div>
+      )}
 
       {/* Jobs Grid */}
       {loading ? (<div className="flex h-[30vh] items-center justify-center">
