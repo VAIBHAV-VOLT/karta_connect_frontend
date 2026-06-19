@@ -745,17 +745,6 @@ setCertificateUrl(publicUrlData.publicUrl);
                 disabled={!isEditing}
               />
             </div>
-            <div className="grid gap-2 sm:col-span-2">
-              <Label htmlFor="stud-project">Project URL</Label>
-              <Input
-                id="stud-project"
-                type="text"
-                placeholder="https://project.example.com"
-                value={projectUrl}
-                onChange={(e) => setProjectUrl(e.target.value)}
-                disabled={!isEditing}
-              />
-            </div>
           </CardContent>
         </Card>
 
@@ -980,6 +969,17 @@ setCertificateUrl(publicUrlData.publicUrl);
             <CardDescription>Add your projects to demonstrate your skills and impact.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            <div className="grid gap-2 pb-4 border-b">
+              <Label htmlFor="stud-project">Main Portfolio / General Project URL</Label>
+              <Input
+                id="stud-project"
+                type="text"
+                placeholder="https://project.example.com"
+                value={projectUrl}
+                onChange={(e) => setProjectUrl(e.target.value)}
+                disabled={!isEditing}
+              />
+            </div>
             {projects.length === 0 && !isEditing ? (
               <span className="text-xs text-muted-foreground">No projects added yet.</span>
             ) : (
