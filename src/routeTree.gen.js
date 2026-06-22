@@ -151,6 +151,12 @@ const AuthenticatedAdminModerationRoute = AuthenticatedAdminModerationRouteImpor
   getParentRoute: () => AuthenticatedRoute,
 });
 
+const AuthenticatedAdminAnalyticsRoute = AuthenticatedAdminAnalyticsRouteImport.update({
+  id: "/admin/analytics",
+  path: "/admin/analytics",
+  getParentRoute: () => AuthenticatedRoute,
+});
+
 const AuthenticatedStudentJobsIndexRoute = AuthenticatedStudentJobsIndexRouteImport.update({
   id: "/student/jobs/",
   path: "/student/jobs/",
