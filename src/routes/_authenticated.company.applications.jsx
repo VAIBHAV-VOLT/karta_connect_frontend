@@ -2,15 +2,21 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, User, FileText, Info, ExternalLink } from "lucide-react";
 import { requireCompany } from "@/lib/route-guards";
 export const Route = createFileRoute("/_authenticated/company/applications")({
-    beforeLoad: requireCompany,
-    component: CompanyApplicationsPage,
+  beforeLoad: requireCompany,
+  component: CompanyApplicationsPage,
 });
 function CompanyApplicationsPage() {
   const { user } = useAuth();
@@ -18,6 +24,7 @@ function CompanyApplicationsPage() {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedPost, setSelectedPost] = useState("all");
   async function loadData() {
     if (!user) return;
     setLoading(true);
@@ -207,10 +214,22 @@ function CompanyApplicationsPage() {
     selected: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
     rejected: "bg-destructive/10 text-destructive border-destructive/20",
   };
-  const filteredApplications =
-    statusFilter === "all"
-      ? applications
-      : applications.filter((app) => app.status === statusFilter);
+
+  const postOptions = [
+    ...new Map(
+      applications
+        .filter((app) => app.job_post)
+        .map((app) => [app.job_post.id, app.job_post]),
+    ).values(),
+  ];
+
+  const filteredApplications = applications.filter((app) => {
+    const statusOk = statusFilter === "all" || app.status === statusFilter;
+
+    const postOk = selectedPost === "all" || app.post_id === selectedPost;
+
+    return statusOk && postOk;
+  });
 
   const counts = {
     all: applications.length,
@@ -228,7 +247,9 @@ function CompanyApplicationsPage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight">Candidate Submissions</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight">
+          Candidate Submissions
+        </h1>
         <p className="text-muted-foreground">
           Review applications, preview resumes, and manage candidates status.
         </p>
@@ -246,11 +267,28 @@ function CompanyApplicationsPage() {
 
           <option value="review">Under Review ({counts.review})</option>
 
-          <option value="shortlisted">Shortlisted ({counts.shortlisted})</option>
+          <option value="shortlisted">
+            Shortlisted ({counts.shortlisted})
+          </option>
 
           <option value="selected">Selected ({counts.selected})</option>
 
           <option value="rejected">Rejected ({counts.rejected})</option>
+        </select>
+
+        <select
+          value={selectedPost}
+          onChange={(e) => setSelectedPost(e.target.value)}
+          className="border rounded-md p-2 bg-background"
+        >
+          <option value="all">All Posts</option>
+
+          {postOptions.map((post) => (
+            <option key={post.id} value={post.id}>
+              {post.title} (
+              {applications.filter((a) => a.post_id === post.id).length})
+            </option>
+          ))}
         </select>
       </div>
 
@@ -260,7 +298,9 @@ function CompanyApplicationsPage() {
             <User className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
             <CardTitle>No candidates found</CardTitle>
 
-            <CardDescription>No candidates found for this status.</CardDescription>
+            <CardDescription>
+              No candidates found for this status.
+            </CardDescription>
           </CardHeader>
         </Card>
       ) : (
@@ -295,7 +335,10 @@ function CompanyApplicationsPage() {
                           Role: {app.job_post?.title}
                         </span>
                         <span>•</span>
-                        <span>Applied: {new Date(app.applied_at).toLocaleDateString()}</span>
+                        <span>
+                          Applied:{" "}
+                          {new Date(app.applied_at).toLocaleDateString()}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -311,7 +354,9 @@ function CompanyApplicationsPage() {
                       <select
                         id={`status-${app.id}`}
                         value={app.status}
-                        onChange={(e) => handleStatusChange(app.id, e.target.value)}
+                        onChange={(e) =>
+                          handleStatusChange(app.id, e.target.value)
+                        }
                         className="flex h-8 rounded-md border border-input bg-background px-2.5 py-0.5 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring font-medium"
                       >
                         <option value="applied">Applied</option>
@@ -340,12 +385,16 @@ function CompanyApplicationsPage() {
                       <Info className="h-4 w-4" /> Cover Note
                     </h4>
                     <p className="text-xs text-muted-foreground italic leading-relaxed">
-                      {app.cover_note ? `"${app.cover_note}"` : "No cover note provided."}
+                      {app.cover_note
+                        ? `"${app.cover_note}"`
+                        : "No cover note provided."}
                     </p>
                   </div>
 
                   <div className="space-y-2">
-                    <h4 className="font-bold text-foreground">Candidate Skills</h4>
+                    <h4 className="font-bold text-foreground">
+                      Candidate Skills
+                    </h4>
                     <div className="flex flex-wrap gap-1">
                       {app.student?.skills?.length > 0 ? (
                         app.student.skills.map((skill) => (
@@ -357,7 +406,9 @@ function CompanyApplicationsPage() {
                           </span>
                         ))
                       ) : (
-                        <span className="text-xs text-muted-foreground">No skills declared.</span>
+                        <span className="text-xs text-muted-foreground">
+                          No skills declared.
+                        </span>
                       )}
                     </div>
                   </div>
@@ -367,7 +418,8 @@ function CompanyApplicationsPage() {
                 {app.student?.resume_url && (
                   <div className="border-t pt-4 flex justify-between items-center">
                     <span className="text-xs text-muted-foreground flex items-center gap-1.5">
-                      <FileText className="h-4 w-4 text-primary" /> Candidate resume attached
+                      <FileText className="h-4 w-4 text-primary" /> Candidate
+                      resume attached
                     </span>
                     <a
                       href={getResumeDownloadUrl(app.student.resume_url)}
