@@ -1,37 +1,41 @@
 name: Deploy Frontend
 
 on:
-  pull_request:
-    branches:
-      - main
   push:
     branches:
       - main
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy Frontend to EC2
-        uses: appleboy/ssh-action@v1.0.3
+      - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Copy files to EC2
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "dist/*"
+          target: "/tmp/karta-frontend"
 
+      - name: Deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd ~/karta_connect_frontend
-
-            git pull origin main
-
-            npm install
-
-            npm run build
-
             sudo rm -rf /var/www/html/*
-
-            sudo cp -r dist/* /var/www/html/
-
+            sudo cp -r /tmp/karta-frontend/dist/* /var/www/html/
             sudo systemctl restart nginx
