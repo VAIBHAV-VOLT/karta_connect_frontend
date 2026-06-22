@@ -19,6 +19,8 @@ import { Route as AuthenticatedCompanyProfileRouteImport } from "./routes/_authe
 import { Route as AuthenticatedCompanyPostsRouteImport } from "./routes/_authenticated.company.posts";
 import { Route as AuthenticatedCompanyApplicationsRouteImport } from "./routes/_authenticated.company.applications";
 import { Route as AuthenticatedCompanyScholarsRouteImport } from "./routes/_authenticated.company.scholars";
+import { Route as AuthenticatedStudentProgressRouteImport } from "./routes/_authenticated.student.progress";
+import { Route as AuthenticatedStudentSupportRouteImport } from "./routes/_authenticated.student.support";
 import { Route as AuthenticatedAdminAnalyticsRouteImport } from "./routes/_authenticated.admin.analytics";
 import { Route as AuthenticatedStudentJobsIndexRouteImport } from "./routes/_authenticated.student.jobs.index";
 import { Route as AuthenticatedAdminStudentsIndexRouteImport } from "./routes/_authenticated.admin.students.index";
@@ -97,6 +99,18 @@ const AuthenticatedStudentSavedRoute = AuthenticatedStudentSavedRouteImport.upda
 const AuthenticatedStudentProfileRoute = AuthenticatedStudentProfileRouteImport.update({
   id: "/student/profile",
   path: "/student/profile",
+  getParentRoute: () => AuthenticatedRoute,
+});
+
+const AuthenticatedStudentProgressRoute = AuthenticatedStudentProgressRouteImport.update({
+  id: "/student/progress",
+  path: "/student/progress",
+  getParentRoute: () => AuthenticatedRoute,
+});
+
+const AuthenticatedStudentSupportRoute = AuthenticatedStudentSupportRouteImport.update({
+  id: "/student/support",
+  path: "/student/support",
   getParentRoute: () => AuthenticatedRoute,
 });
 
@@ -193,6 +207,8 @@ const AuthenticatedRouteChildren = {
   AuthenticatedCompanyProfileRoute,
   AuthenticatedStudentApplicationsRoute,
   AuthenticatedStudentProfileRoute,
+  AuthenticatedStudentProgressRoute,
+  AuthenticatedStudentSupportRoute,
   AuthenticatedStudentSavedRoute,
   AuthenticatedStudentsIdRoute,
   AuthenticatedAdminCompaniesIdRoute,

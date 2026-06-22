@@ -13,6 +13,71 @@ import { Loader2, User, BookOpen, Award, FileText, Upload, X, ExternalLink, Eye,
 import Confetti from 'react-confetti';
 import { useWindowSize } from 'react-use';
 
+import { z } from "zod";
+
+const isNA = (val) => val && (val.toUpperCase() === 'NA' || val.toUpperCase() === 'N/A');
+
+const profileSchema = z.object({
+  name: z.string()
+    .min(3, "Name must be at least 3 characters")
+    .max(50, "Name must be at most 50 characters")
+    .regex(/^[a-zA-Z\s\-']+$/, "Name can only contain letters, spaces, hyphens, and apostrophes"),
+  email: z.string()
+    .min(5, "Email must be at least 5 characters")
+    .max(100, "Email must be at most 100 characters")
+    .email("Invalid email format"),
+  location: z.string()
+    .max(100, "Location must be at most 100 characters")
+    .optional()
+    .refine(val => !val || isNA(val) || val.length >= 2, "Location must be at least 2 characters if provided"),
+  university: z.string()
+    .min(3, "University must be at least 3 characters")
+    .max(100, "University must be at most 100 characters"),
+  course: z.string()
+    .min(2, "Course must be at least 2 characters")
+    .max(100, "Course must be at most 100 characters"),
+  yearOfStudy: z.enum(["1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year", "Postgraduate"], {
+    errorMap: () => ({ message: "Please select a valid Year of Study" })
+  }),
+  graduationYear: z.string()
+    .regex(/^\d{4}$/, "Graduation year must be a 4-digit number")
+    .refine(val => {
+      const year = parseInt(val, 10);
+      return year >= 2026 && year <= 2036;
+    }, "Graduation year must be between 2026 and 2036"),
+  bio: z.string()
+    .max(500, "Bio must be at most 500 characters")
+    .optional()
+    .refine(val => !val || isNA(val) || val.length >= 20, "Bio must be at least 20 characters if provided"),
+  githubUrl: z.string()
+    .max(255, "GitHub URL must be at most 255 characters")
+    .optional(),
+  linkedinUrl: z.string()
+    .min(1, "LinkedIn URL is required")
+    .max(255, "LinkedIn URL must be at most 255 characters"),
+  skills: z.array(
+    z.string()
+      .min(2, "Each skill must be at least 2 characters")
+      .max(30, "Each skill must be at most 30 characters")
+  )
+    .min(1, "Please add at least 1 skill")
+    .max(20, "You can add a maximum of 20 skills"),
+  resumeUrl: z.string().min(1, "Please upload your Resume (PDF format)"),
+  extracurriculars: z.string()
+    .max(500, "Extracurriculars must be at most 500 characters")
+    .optional()
+    .refine(val => !val || isNA(val) || val.length >= 10, "Extracurriculars must be at least 10 characters if provided"),
+  achievements: z.array(z.object({
+    id: z.string().optional(),
+    title: z.string().optional(),
+    description: z.string()
+      .max(500, "Achievement description must be at most 500 characters")
+      .optional()
+      .refine(val => !val || isNA(val) || val.length >= 10, "Achievement description must be at least 10 characters if provided"),
+    certificateUrl: z.string().nullable().optional()
+  })).optional()
+});
+
 export const Route = createFileRoute("/_authenticated/student/profile")({
     beforeLoad: requireStudent,
     component: StudentProfilePage,
@@ -38,7 +103,6 @@ function StudentProfilePage() {
     const [bio, setBio] = useState("");
     const [githubUrl, setGithubUrl] = useState("");
     const [linkedinUrl, setLinkedinUrl] = useState("");
-    const [projectUrl, setProjectUrl] = useState("");
     const [skills, setSkills] = useState([]);
     const [newSkill, setNewSkill] = useState("");
     const [achievements, setAchievements] = useState([]);
@@ -74,7 +138,6 @@ function StudentProfilePage() {
                     setBio(data.bio || "");
                     setGithubUrl(data.github_url || "");
                     setLinkedinUrl(data.linkedin_url || "");
-                    setProjectUrl(data.project_url || "");
                     setSkills(data.skills || []);
                     
                     let loadedAchievements = [];
@@ -274,19 +337,26 @@ function StudentProfilePage() {
 
   if (!user) return;
 
-  const missingRequired = [];
-  if (!name) missingRequired.push("Full Name");
-  if (!email) missingRequired.push("Contact Email");
-  if (!university) missingRequired.push("University");
-  if (!course) missingRequired.push("Course of Study");
-  if (!yearOfStudy) missingRequired.push("Year of Study");
-  if (!graduationYear) missingRequired.push("Graduation Year");
-  if (!linkedinUrl) missingRequired.push("LinkedIn Profile URL");
-  if (!resumeUrl) missingRequired.push("Resume Document");
-  if (skills.length === 0) missingRequired.push("Skills");
+  const validationResult = profileSchema.safeParse({
+    name,
+    email,
+    location,
+    university,
+    course,
+    yearOfStudy,
+    graduationYear,
+    bio,
+    githubUrl,
+    linkedinUrl,
+    skills,
+    resumeUrl,
+    extracurriculars,
+    achievements
+  });
 
-  if (missingRequired.length > 0) {
-    toast.error(`Please fill required fields: ${missingRequired.join(', ')}`);
+  if (!validationResult.success) {
+    const errorMsg = validationResult.error.issues[0].message;
+    toast.error(`Validation Error: ${errorMsg}`);
     return;
   }
 
@@ -308,7 +378,6 @@ function StudentProfilePage() {
         extracurriculars,
         github_url: githubUrl,
         linkedin_url: linkedinUrl,
-        project_url: projectUrl,
         projects: projects,
         resume_url: resumeUrl,
         avatar_url: avatarUrl,
@@ -489,7 +558,6 @@ setCertificateUrl(publicUrlData.publicUrl);
             { name: "Achievements", value: achievements && achievements.length > 0 },
             { name: "Extracurriculars", value: extracurriculars },
             { name: "GitHub URL", value: githubUrl },
-            { name: "Project URL", value: projectUrl },
             { name: "Profile Photo", value: avatarUrl }
         ];
 
@@ -633,11 +701,13 @@ setCertificateUrl(publicUrlData.publicUrl);
                   onChange={(e) => setName(e.target.value)}
                   disabled={!isEditing}
                   required
+                  minLength={3}
+                  maxLength={50}
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="stud-email">Contact Email <span className="text-destructive">*</span></Label>
-                <Input id="stud-email" type="email" value={email} disabled className="bg-muted cursor-not-allowed"/>
+                <Input id="stud-email" type="email" value={email} disabled className="bg-muted cursor-not-allowed" minLength={5} maxLength={100}/>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="stud-loc">Location</Label>
@@ -647,6 +717,8 @@ setCertificateUrl(publicUrlData.publicUrl);
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   disabled={!isEditing}
+                  minLength={2}
+                  maxLength={100}
                 />
               </div>
               <div className="grid gap-2">
@@ -656,6 +728,7 @@ setCertificateUrl(publicUrlData.publicUrl);
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
                   disabled={!isEditing}
+                  maxLength={500}
                 />
               </div>
             </div>
@@ -678,6 +751,8 @@ setCertificateUrl(publicUrlData.publicUrl);
                 value={university}
                 onChange={(e) => setUniversity(e.target.value)}
                 disabled={!isEditing}
+                minLength={3}
+                maxLength={100}
               />
             </div>
             <div className="grid gap-2">
@@ -687,6 +762,8 @@ setCertificateUrl(publicUrlData.publicUrl);
                 value={course}
                 onChange={(e) => setCourse(e.target.value)}
                 disabled={!isEditing}
+                minLength={2}
+                maxLength={100}
               />            </div>
             <div className="grid gap-2">
               <Label htmlFor="stud-year">Year of Study <span className="text-destructive">*</span></Label>
@@ -695,11 +772,14 @@ setCertificateUrl(publicUrlData.publicUrl);
                 value={yearOfStudy}
                 onChange={(e) => setYearOfStudy(e.target.value)}
                 disabled={!isEditing}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="1st Year">1st Year</option>
                 <option value="2nd Year">2nd Year</option>
                 <option value="3rd Year">3rd Year</option>
                 <option value="4th Year">4th Year</option>
+                <option value="5th Year">5th Year</option>
+                <option value="Postgraduate">Postgraduate</option>
                 <option value="Graduated">Graduated</option>
               </select>
             </div>
@@ -710,6 +790,8 @@ setCertificateUrl(publicUrlData.publicUrl);
                 value={graduationYear}
                 onChange={(e) => setGraduationYear(e.target.value)}
                 disabled={!isEditing}
+                min={2026}
+                max={2036}
               />
             </div>
           </CardContent>
@@ -720,7 +802,7 @@ setCertificateUrl(publicUrlData.publicUrl);
             <CardTitle className="flex items-center gap-2">
               <ExternalLink className="h-5 w-5 text-primary"/> External Links
             </CardTitle>
-            <CardDescription>GitHub, Project URLs, and required LinkedIn Profile.</CardDescription>
+            <CardDescription>GitHub, and required LinkedIn Profile.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
@@ -732,6 +814,7 @@ setCertificateUrl(publicUrlData.publicUrl);
                 value={githubUrl}
                 onChange={(e) => setGithubUrl(e.target.value)}
                 disabled={!isEditing}
+                maxLength={255}
               />
             </div>
             <div className="grid gap-2">
@@ -743,6 +826,7 @@ setCertificateUrl(publicUrlData.publicUrl);
                 value={linkedinUrl}
                 onChange={(e) => setLinkedinUrl(e.target.value)}
                 disabled={!isEditing}
+                maxLength={255}
               />
             </div>
           </CardContent>
@@ -969,17 +1053,6 @@ setCertificateUrl(publicUrlData.publicUrl);
             <CardDescription>Add your projects to demonstrate your skills and impact.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid gap-2 pb-4 border-b">
-              <Label htmlFor="stud-project">Main Portfolio / General Project URL</Label>
-              <Input
-                id="stud-project"
-                type="text"
-                placeholder="https://project.example.com"
-                value={projectUrl}
-                onChange={(e) => setProjectUrl(e.target.value)}
-                disabled={!isEditing}
-              />
-            </div>
             {projects.length === 0 && !isEditing ? (
               <span className="text-xs text-muted-foreground">No projects added yet.</span>
             ) : (

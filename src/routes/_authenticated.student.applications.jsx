@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,22 +47,100 @@ function StudentApplicationsPage() {
     }
     const statusStyles = {
         applied: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-        review: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+        shortlisted: "bg-purple-500/10 text-purple-500 border-purple-500/20",
         selected: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
         rejected: "bg-destructive/10 text-destructive border-destructive/20"
     };
     const statusLabels = {
         applied: "Applied",
-        review: "Under Review",
         shortlisted: "Shortlisted",
         selected: "Selected",
         rejected: "Rejected"
     };
+
+    const COLORS = {
+        applied: "#3b82f6", // blue-500
+        shortlisted: "#a855f7", // purple-500
+        selected: "#10b981", // emerald-500
+        rejected: "#ef4444" // red-500
+    };
+
+    const statsMap = {
+        applied: 0,
+        shortlisted: 0,
+        selected: 0,
+        rejected: 0
+    };
+
+    apps.forEach(app => {
+        if (statsMap[app.status] !== undefined) {
+            statsMap[app.status]++;
+        } else {
+            statsMap[app.status] = 1;
+        }
+    });
+
+    const chartData = Object.keys(statsMap)
+        .filter(key => statsMap[key] > 0)
+        .map(key => ({
+            name: statusLabels[key] || key,
+            value: statsMap[key],
+            color: COLORS[key] || "#8884d8"
+        }));
     return (<div className="space-y-8 animate-in fade-in duration-500">
       <div>
         <h1 className="text-3xl font-extrabold tracking-tight">My Applications</h1>
         <p className="text-muted-foreground">Monitor the status of your submissions to corporate partners.</p>
       </div>
+
+      {apps.length > 0 && (
+        <div className="grid gap-6 md:grid-cols-2 mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Application Overview</CardTitle>
+            </CardHeader>
+            <CardContent className="h-[250px] flex items-center justify-center">
+               <ResponsiveContainer width="100%" height="100%">
+                 <PieChart>
+                   <Pie
+                     data={chartData}
+                     cx="50%"
+                     cy="50%"
+                     innerRadius={60}
+                     outerRadius={80}
+                     paddingAngle={5}
+                     dataKey="value"
+                   >
+                     {chartData.map((entry, index) => (
+                       <Cell key={`cell-${index}`} fill={entry.color} />
+                     ))}
+                   </Pie>
+                   <Tooltip formatter={(value, name) => [value, name]} />
+                 </PieChart>
+               </ResponsiveContainer>
+            </CardContent>
+          </Card>
+          
+          <div className="grid grid-cols-2 gap-4">
+             <Card>
+               <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Total Applied</CardTitle></CardHeader>
+               <CardContent><p className="text-3xl font-bold">{apps.length}</p></CardContent>
+             </Card>
+             <Card>
+               <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-emerald-500">Selected</CardTitle></CardHeader>
+               <CardContent><p className="text-3xl font-bold">{statsMap.selected || 0}</p></CardContent>
+             </Card>
+             <Card>
+               <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-purple-500">Shortlisted</CardTitle></CardHeader>
+               <CardContent><p className="text-3xl font-bold">{statsMap.shortlisted || 0}</p></CardContent>
+             </Card>
+             <Card>
+               <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-blue-500">Applied</CardTitle></CardHeader>
+               <CardContent><p className="text-3xl font-bold">{statsMap.applied || 0}</p></CardContent>
+             </Card>
+          </div>
+        </div>
+      )}
 
       {/* Status filter pills */}
       <div className="mb-4">
@@ -72,7 +151,6 @@ function StudentApplicationsPage() {
        >
          <option value="">All</option>
          <option value="applied">Applied</option>
-         <option value="review">Under Review</option>
          <option value="shortlisted">Shortlisted</option>
          <option value="selected">Selected</option>
          <option value="rejected">Rejected</option>
