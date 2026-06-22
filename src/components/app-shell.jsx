@@ -14,6 +14,7 @@ import {
   Moon,
   Bookmark,
   BarChart3,
+  LifeBuoy,
 } from "lucide-react";
 import {
   Sidebar,
@@ -42,17 +43,30 @@ const NAV = {
   ],
   company: [
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+
     { to: "/company/profile", label: "Company Profile", icon: Building2 },
-    { to: "/company/posts", label: "Job Posts", icon: Briefcase, search: { type: "job" } },
+
+    {
+      to: "/company/posts",
+      label: "Job Posts",
+      icon: Briefcase,
+      search: { type: "job" },
+    },
+
     {
       to: "/company/posts",
       label: "Internship Posts",
       icon: GraduationCap,
       search: { type: "internship" },
     },
+
     { to: "/company/applications", label: "Applicants", icon: ClipboardList },
-    { to: "/settings", label: "Settings", icon: Settings },
+
     { to: "/company/scholars", label: "Search Scholars", icon: Users },
+
+    { to: "/company/support", label: "Support", icon: LifeBuoy },
+
+    { to: "/settings", label: "Settings", icon: Settings },
   ],
   admin: [
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -65,13 +79,18 @@ const NAV = {
 };
 function useTheme() {
   const [theme, setTheme] = useState(() =>
-    typeof window !== "undefined" && localStorage.getItem("theme") === "dark" ? "dark" : "light",
+    typeof window !== "undefined" && localStorage.getItem("theme") === "dark"
+      ? "dark"
+      : "light",
   );
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
     localStorage.setItem("theme", theme);
   }, [theme]);
-  return { theme, toggle: () => setTheme((t) => (t === "dark" ? "light" : "dark")) };
+  return {
+    theme,
+    toggle: () => setTheme((t) => (t === "dark" ? "light" : "dark")),
+  };
 }
 export function AppShell({ children }) {
   const { user, role } = useAuth();
@@ -84,7 +103,9 @@ export function AppShell({ children }) {
     if (!it.search)
       return (
         !search?.type ||
-        (it.to !== "/student/jobs" && it.to !== "/company/posts" && it.to !== "/admin/posts")
+        (it.to !== "/student/jobs" &&
+          it.to !== "/company/posts" &&
+          it.to !== "/admin/posts")
       );
     return search?.type === it.search.type;
   };
@@ -93,7 +114,10 @@ export function AppShell({ children }) {
       <div className="flex min-h-screen w-full bg-background">
         <Sidebar collapsible="icon">
           <SidebarHeader>
-            <Link to="/dashboard" className="flex items-center gap-2 px-2 py-2 text-primary">
+            <Link
+              to="/dashboard"
+              className="flex items-center gap-2 px-2 py-2 text-primary"
+            >
               <div className="bg-white rounded-md p-1 shadow-sm border border-slate-100 flex items-center justify-center h-7 w-7 shrink-0">
                 <img
                   src="/karta-logo.png"
@@ -113,7 +137,11 @@ export function AppShell({ children }) {
                 <SidebarMenu>
                   {items.map((it) => (
                     <SidebarMenuItem key={it.label}>
-                      <SidebarMenuButton asChild isActive={isActive(it)} tooltip={it.label}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive(it)}
+                        tooltip={it.label}
+                      >
                         <Link to={it.to} search={it.search}>
                           <it.icon className="h-4 w-4" />
                           <span>{it.label}</span>
@@ -129,7 +157,9 @@ export function AppShell({ children }) {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={() => signOut().then(() => (window.location.href = "/"))}
+                  onClick={() =>
+                    signOut().then(() => (window.location.href = "/"))
+                  }
                   tooltip="Logout"
                 >
                   <LogOut className="h-4 w-4" />
@@ -144,13 +174,26 @@ export function AppShell({ children }) {
           <header className="flex h-14 items-center justify-between border-b bg-card px-4">
             <div className="flex items-center gap-2">
               <SidebarTrigger />
-              <span className="text-sm text-muted-foreground capitalize">{role}</span>
+              <span className="text-sm text-muted-foreground capitalize">
+                {role}
+              </span>
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle theme">
-                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggle}
+                aria-label="Toggle theme"
+              >
+                {theme === "dark" ? (
+                  <Sun className="h-4 w-4" />
+                ) : (
+                  <Moon className="h-4 w-4" />
+                )}
               </Button>
-              <span className="hidden text-sm text-muted-foreground sm:inline">{user?.email}</span>
+              <span className="hidden text-sm text-muted-foreground sm:inline">
+                {user?.email}
+              </span>
             </div>
           </header>
           <main className="flex-1 p-6">
