@@ -157,13 +157,6 @@ const AuthenticatedStudentJobsIndexRoute = AuthenticatedStudentJobsIndexRouteImp
   getParentRoute: () => AuthenticatedRoute,
 });
 
-const AuthenticatedStudentJobsIndexRoute =
-  AuthenticatedStudentJobsIndexRouteImport.update({
-    id: "/student/jobs/",
-    path: "/student/jobs/",
-    getParentRoute: () => AuthenticatedRoute,
-  });
-
 const AuthenticatedAdminStudentsIndexRoute =
   AuthenticatedAdminStudentsIndexRouteImport.update({
     id: "/admin/students/",
