@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import {
   Users,
@@ -497,6 +498,39 @@ function StudentDashboard({ userId }) {
   const [query, setQuery] = useState("");
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
+  const [showHiringPartners, setShowHiringPartners] = useState(false);
+  const [gettingAiMatch, setGettingAiMatch] = useState(false);
+  const [aiRecommendations, setAiRecommendations] = useState([]);
+  
+  async function getAiRecommendations() {
+    if (!userId) return;
+    setGettingAiMatch(true);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const token = session?.session?.access_token;
+      if (!token) throw new Error("No access token available.");
+
+      const apiUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3001";
+      const res = await fetch(`${apiUrl}/api/student/recommendations`, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to get AI recommendations");
+
+      setAiRecommendations(data.recommendations || []);
+      toast.success("AI matched your profile with opportunities!");
+    } catch (err) {
+      console.error("AI Match Error:", err);
+      toast.error(err.message || "Failed to get recommendations.");
+    } finally {
+      setGettingAiMatch(false);
+    }
+  }
+
   const openJob = (job) => {
     try {
       console.log("openJob ->", job?.id);
@@ -610,13 +644,18 @@ function StudentDashboard({ userId }) {
   const isProfileIncomplete = !profile?.name || !profile?.university || !profile?.course;
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div>
-        <h1 className="text-3xl font-extrabold tracking-tight">
-          Welcome back, {profile?.name || "Student"}!
-        </h1>
-        <p className="text-muted-foreground font-medium">
-          Find verified jobs and track your submissions.
-        </p>
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight">
+            Welcome back, {profile?.name || "Student"}!
+          </h1>
+          <p className="text-muted-foreground font-medium">
+            Find verified jobs and track your submissions.
+          </p>
+        </div>
+        <Button onClick={() => setShowHiringPartners(true)} variant="outline" className="flex items-center gap-2">
+          <Building2 className="h-4 w-4" /> Hiring Partners
+        </Button>
       </div>
 
       {isProfileIncomplete && (
@@ -640,24 +679,69 @@ function StudentDashboard({ userId }) {
 
       {/* Removed small metrics cards to simplify dashboard per request */}
 
-      {/* Main Grid Content (LinkedIn Style Sidebar + Main Openings Feed) */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Recommended Openings (Left side - 2 cols) */}
-        <div className="lg:col-span-2 space-y-6">
-          <Card className="h-full shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between border-b pb-4">
+      {/* Main Grid Content (Main Openings Feed) */}
+      <div className="grid gap-6 grid-cols-1">
+        <div className="space-y-6">
+          <Card className="h-full shadow-sm border-0 shadow-none sm:border sm:shadow-sm">
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b pb-4 gap-4">
               <div>
-                <CardTitle className="text-lg font-bold">Openings</CardTitle>
+                <CardTitle className="text-xl font-bold">Openings</CardTitle>
               </div>
-              <div className="w-72">
-                <Input
-                  placeholder="Search by company, title, or domain"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                />
+              <div className="flex w-full sm:w-auto items-center gap-2">
+                <div className="w-full sm:w-72">
+                  <Input
+                    placeholder="Search by company, title, or domain"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                  />
+                </div>
+                <Button 
+                  onClick={getAiRecommendations} 
+                  disabled={gettingAiMatch}
+                  className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:opacity-90 text-white font-bold border-0 shrink-0"
+                >
+                  {gettingAiMatch ? <Loader2 className="h-4 w-4 animate-spin" /> : "✨"}
+                  <span className="hidden sm:inline">{gettingAiMatch ? "Matching..." : "AI Match"}</span>
+                </Button>
               </div>
             </CardHeader>
             <CardContent className="space-y-4 pt-4">
+              {/* AI Recommendations Section */}
+              {aiRecommendations && aiRecommendations.length > 0 && (
+                <div className="space-y-4">
+                  <h2 className="text-lg font-bold flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500">
+                    ✨ Top AI Matches for You
+                  </h2>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {aiRecommendations.slice(0, 2).map((job) => (
+                      <Card key={`ai-${job.id}`} className="flex flex-col hover:shadow-md transition-shadow cursor-pointer border-purple-500/30 bg-purple-500/5" onClick={() => openJob({...job, company: job.companies || job.company})}>
+                        <CardHeader className="pb-3">
+                          <div className="flex justify-between items-start gap-2">
+                            <div className="h-10 w-10 border rounded bg-background flex items-center justify-center overflow-hidden shrink-0">
+                              {(job.companies?.logo_url || job.company?.logo_url) ? (<img src={job.companies?.logo_url || job.company?.logo_url} alt={job.companies?.name || job.company?.name} className="h-full w-full object-cover"/>) : (<Briefcase className="h-5 w-5 text-muted-foreground"/>)}
+                            </div>
+                            <div className="space-y-1 text-right flex flex-col items-end">
+                              <span className={`text-[10px] border px-2 py-0.5 rounded-full uppercase font-bold tracking-wider ${job.type === "job" ? "bg-blue-500/10 text-blue-500 border-blue-500/20" : "bg-purple-500/10 text-purple-500 border-purple-500/20"}`}>
+                                {job.type}
+                              </span>
+                              <span className="text-[10px] bg-green-500/10 text-green-600 border border-green-500/20 px-2 py-0.5 rounded-full font-bold">
+                                {job.matchScore}% Match
+                              </span>
+                            </div>
+                          </div>
+                          <CardTitle className="text-base font-bold mt-3 line-clamp-1">{job.title}</CardTitle>
+                          <CardDescription className="text-xs line-clamp-1">{job.companies?.name || job.company?.name || "Company partner"}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="pb-3 flex-1 hidden sm:block">
+                          <p className="text-xs text-muted-foreground line-clamp-2">{job.description}</p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                  <hr className="my-4 border-dashed" />
+                </div>
+              )}
+
               {filteredJobs.length === 0 ? (
                 <div className="text-center py-8 text-sm text-muted-foreground">
                   No postings match your search right now.
@@ -717,86 +801,87 @@ function StudentDashboard({ userId }) {
             </CardContent>
           </Card>
         </div>
+      </div>
 
-        {/* Hiring Partners Network (Right side - 1 col - LinkedIn style) */}
-        <div className="lg:col-span-1">
-          <Card className="h-full shadow-sm border border-border/80">
-            <CardHeader className="border-b pb-4">
-              <CardTitle className="text-lg font-bold flex items-center gap-2">
-                <Building2 className="h-5 w-5 text-primary" /> Hiring Partners
-              </CardTitle>
-              <CardDescription className="font-medium">
-                Organizations partner with Karta Network.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 pt-4">
-              {companies.length === 0 ? (
-                <div className="text-center py-8 text-sm text-muted-foreground">
-                  No partner companies active at this time.
-                </div>
-              ) : (
-                companies.map((c) => {
-                  // Fallback initials generator
-                  const initials = c.name
-                    ? c.name
-                      .split(" ")
-                      .map((w) => w[0])
-                      .slice(0, 2)
-                      .join("")
-                      .toUpperCase()
-                    : "CO";
-                  return (
-                    <div
-                      key={c.id}
-                      className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0 gap-3"
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="h-9 w-9 border rounded-lg bg-primary/5 border-primary/15 flex items-center justify-center overflow-hidden shrink-0 font-extrabold text-primary text-xs">
-                          {c.logo_url ? (
-                            <img
-                              src={c.logo_url}
-                              alt={c.name}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <span>{initials}</span>
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <h4 className="font-bold text-foreground text-xs truncate" title={c.name}>
-                            {c.name}
-                          </h4>
-                          <p className="text-[10px] text-muted-foreground font-medium truncate">
-                            {c.industry || "Industry Partner"}
-                          </p>
-                          {c.location && (
-                            <p className="text-[9px] text-muted-foreground/80 font-medium truncate">
-                              {c.location}
-                            </p>
-                          )}
-                        </div>
+      {/* Hiring Partners Sheet */}
+      <Sheet open={showHiringPartners} onOpenChange={setShowHiringPartners}>
+        <SheetContent className="sm:max-w-md overflow-y-auto">
+          <SheetHeader className="pb-4 border-b">
+            <SheetTitle className="text-xl font-bold flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-primary" /> Hiring Partners
+            </SheetTitle>
+            <SheetDescription className="font-medium">
+              Organizations partnering with Karta Network.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="space-y-4 pt-6">
+            {companies.length === 0 ? (
+              <div className="text-center py-8 text-sm text-muted-foreground">
+                No partner companies active at this time.
+              </div>
+            ) : (
+              companies.map((c) => {
+                const initials = c.name
+                  ? c.name
+                    .split(" ")
+                    .map((w) => w[0])
+                    .slice(0, 2)
+                    .join("")
+                    .toUpperCase()
+                  : "CO";
+                return (
+                  <div
+                    key={c.id}
+                    className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0 gap-3"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-10 w-10 border rounded-lg bg-primary/5 border-primary/15 flex items-center justify-center overflow-hidden shrink-0 font-extrabold text-primary text-sm">
+                        {c.logo_url ? (
+                          <img
+                            src={c.logo_url}
+                            alt={c.name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span>{initials}</span>
+                        )}
                       </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        {c.website && (
-                          <a
-                            href={c.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center justify-center h-7 w-7 rounded-md border border-input bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                            title="Visit Website"
-                          >
-                            <Globe className="h-3.5 w-3.5" />
-                          </a>
+                      <div className="min-w-0">
+                        <h4 className="font-bold text-foreground text-sm truncate" title={c.name}>
+                          {c.name}
+                        </h4>
+                        <p className="text-xs text-muted-foreground font-medium truncate">
+                          {c.industry || "Industry Partner"}
+                        </p>
+                        {c.location && (
+                          <p className="text-[10px] text-muted-foreground/80 font-medium truncate mt-0.5">
+                            <MapPin className="h-3 w-3 inline-block mr-0.5"/>
+                            {c.location}
+                          </p>
                         )}
                       </div>
                     </div>
-                  );
-                })
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {c.website && (
+                        <a
+                          href={c.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-input bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                          title="Visit Website"
+                        >
+                          <Globe className="h-4 w-4" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
       {selectedJob && (
         <JobDetailsSheet
           job={selectedJob}
