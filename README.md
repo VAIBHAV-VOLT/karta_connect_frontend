@@ -1,51 +1,146 @@
 # Karta Connect Frontend
 
-React + TanStack Router frontend for the Karta Connect talent portal.
+A modern React-based talent portal frontend for **Karta Connect** — connecting students with scholarship and job opportunities. Built with React, TanStack Router, and Tailwind CSS with a comprehensive UI component library powered by Radix UI.
 
-## Project Structure
+> **Note:** This is the frontend repository. For the backend API, see [KartaConnect Backend](https://github.com/yourusername/karta_connect_backend) (update repository URL).
+
+## 🎯 Overview
+
+Karta Connect is a multi-role portal supporting three key user types:
+
+- **Students**: Browse job/scholarship opportunities, apply, manage applications, track progress
+- **Companies**: Post opportunities, manage applications, view scholars, manage company profile
+- **Admin**: Moderation, analytics, user management, content oversight
+
+## 🛠 Tech Stack
+
+- **Frontend Framework**: React 19
+- **Routing**: TanStack Router (with auto-generated route tree)
+- **Build Tool**: Vite
+- **Styling**: Tailwind CSS + TailwindCSS Vite plugin
+- **UI Components**: Radix UI (headless, accessible components)
+- **State Management**: TanStack Query (React Query) for server state
+- **Forms**: React Hook Form + Zod validation
+- **Authentication**: Supabase JS client
+- **Data Visualization**: Recharts
+- **Date Handling**: date-fns
+- **Export**: XLSX
+- **Notifications**: Sonner
+- **Language**: JavaScript/TypeScript
+
+## 📁 Project Structure
 
 ```
 karta_connect_frontend/
-├── index.html               # HTML entry point
-├── package.json             # Project dependencies
-├── tsconfig.json            # TypeScript configuration
-├── vite.config.js           # Vite build configuration
-├── eslint.config.js         # ESLint configuration
-├── .env                     # Environment variables (create from .env.example)
-├── .env.example             # Example environment configuration
-├── .gitignore               # Git ignore rules
-├── README.md                # This file
-├── public/                  # Static assets
-│   └── karta-logo.png
-├── src/
-│   ├── main.jsx             # React app entry point
-│   ├── router.jsx           # TanStack Router configuration
-│   ├── routeTree.gen.js     # Auto-generated route tree
-│   ├── routeTree.gen.ts     # Route tree TypeScript definitions
-│   ├── styles.css           # Global styles
-│   ├── components/          # React components
-│   │   ├── app-shell.jsx
-│   │   └── ui/              # UI component library
-│   ├── hooks/               # Custom React hooks
-│   │   ├── use-auth.js
-│   │   └── use-mobile.jsx
-│   ├── integrations/        # Third-party integrations
-│   │   └── supabase/
-│   │       ├── auth-attacher.js
-│   │       └── client.js
-│   ├── lib/                 # Utility functions
-│   │   ├── config.server.js
-│   │   ├── error-capture.js
-│   │   ├── error-page.js
-│   │   ├── storage-paths.js
-│   │   ├── utils.js
-│   │   └── api/
-│   │       └── karta.functions.js
-│   └── routes/              # Page components/routes
-└── dist/                    # Build output directory
+├── index.html                    # HTML entry point
+├── package.json                  # Dependencies & scripts
+├── tsconfig.json                 # TypeScript configuration
+├── vite.config.js                # Vite build config
+├── nginx.conf                    # Nginx configuration for deployment
+├── Dockerfile                    # Docker containerization
+├── eslint.config.js              # ESLint configuration
+├── .env.example                  # Example environment variables
+├── README.md                     # This file
+│
+├── public/                       # Static assets
+│   └── favicon, images, etc.
+│
+└── src/
+    ├── main.jsx                  # React app entry point
+    ├── router.jsx                # TanStack Router setup
+    ├── routeTree.gen.js          # Auto-generated route definitions
+    ├── routeTree.gen.ts          # TypeScript route type definitions
+    ├── styles.css                # Global styles
+    │
+    ├── components/               # Reusable React components
+    │   ├── app-shell.jsx         # Main app layout wrapper
+    │   └── ui/                   # UI component library (Radix UI based)
+    │       ├── alert.jsx
+    │       ├── avatar.jsx
+    │       ├── badge.jsx
+    │       ├── button.jsx
+    │       ├── card.jsx
+    │       ├── chart.jsx
+    │       ├── command.jsx
+    │       ├── dialog.jsx
+    │       ├── drawer.jsx
+    │       ├── form.jsx
+    │       ├── input.jsx
+    │       ├── menubar.jsx
+    │       ├── popover.jsx
+    │       ├── select.jsx
+    │       ├── separator.jsx
+    │       ├── sidebar.jsx
+    │       ├── skeleton.jsx
+    │       ├── table.jsx
+    │       ├── tabs.jsx
+    │       ├── toast.jsx
+    │       └── [other UI components]
+    │
+    ├── hooks/                    # Custom React hooks
+    │   ├── use-auth.js           # Authentication context hook
+    │   └── use-mobile.jsx        # Mobile responsiveness detection
+    │
+    ├── integrations/             # Third-party service integrations
+    │   └── supabase/
+    │       ├── client.js         # Supabase client initialization
+    │       └── auth-attacher.js  # Auth setup & listeners
+    │
+    ├── lib/                      # Utility functions & helpers
+    │   ├── api-client.js         # HTTP client for API calls
+    │   ├── config.server.js      # Server configuration
+    │   ├── error-capture.js      # Error handling utilities
+    │   ├── error-page.js         # Error page component
+    │   ├── route-guards.js       # Route protection & middleware
+    │   ├── storage-paths.js      # Local storage key definitions
+    │   ├── utils.js              # General utility functions
+    │   └── api/
+    │       ├── index.js          # API endpoints index
+    │       └── karta.functions.js # Karta-specific API functions
+    │
+    └── routes/                   # Page components (file-based routing)
+        ├── __root.jsx            # Root layout
+        ├── index.jsx             # Landing page
+        ├── login.jsx             # Login page
+        ├── signup.jsx            # Sign up page
+        ├── forgot-password.jsx    # Password recovery
+        ├── reset-password.jsx     # Reset password flow
+        ├── create-password.jsx    # Initial password setup
+        │
+        ├── _authenticated.jsx    # Protected routes wrapper
+        ├── _authenticated.dashboard.jsx
+        ├── _authenticated.settings.jsx
+        │
+        ├── _authenticated.admin.analytics.jsx
+        ├── _authenticated.admin.companies.*.jsx
+        ├── _authenticated.admin.moderation.jsx
+        ├── _authenticated.admin.posts.*.jsx
+        ├── _authenticated.admin.students.*.jsx
+        │
+        ├── _authenticated.company.applications.jsx
+        ├── _authenticated.company.posts.jsx
+        ├── _authenticated.company.profile.jsx
+        ├── _authenticated.company.scholars.jsx
+        ├── _authenticated.company.support.jsx
+        │
+        └── _authenticated.student.*.jsx
+            ├── applications.jsx
+            ├── jobs.index.jsx
+            ├── jobs.$id.apply.jsx
+            ├── profile.jsx
+            ├── progress.jsx
+            └── saved.jsx
+
+└── dist/                        # Build output (generated)
 ```
 
-## Setup Instructions
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js 18+ and npm/yarn
+- Supabase account for authentication
+- Backend API running (see Backend Setup below)
 
 ### 1. Install Dependencies
 
@@ -117,7 +212,7 @@ Now uses independent `.env` file instead of root monorepo `.env`.
 ### 3. **Backend API URL**
 Update `VITE_API_URL` to point to your backend server:
 - Local development: `http://localhost:3001`
-- Production: `https://your-backend-domain.com`
+- Production: `http://13.201.18.131:5000`
 
 ### 4. **Supabase Integration**
 Frontend needs its own Supabase keys:
@@ -195,44 +290,197 @@ UI components are in `src/components/ui/` using Radix UI primitives with Tailwin
 - Global styles in `src/styles.css`
 - Component-specific styles in component files
 
-## Deployment
+## 🐳 Docker Deployment
 
-### Build
+### Build Docker Image
+```bash
+docker build -t karta-connect-frontend:latest .
+```
+
+### Run Container Locally
+```bash
+docker run -p 80:80 \
+  -e VITE_SUPABASE_URL=your_supabase_url \
+  -e VITE_SUPABASE_ANON_KEY=your_anon_key \
+  -e VITE_API_URL=http://your-backend-url \
+  karta-connect-frontend:latest
+```
+
+The application will be available at `http://localhost`
+
+### Docker Compose
+To run with backend API:
+```bash
+docker-compose up
+```
+
+See `docker-compose.yml` in the root directory for full configuration.
+
+## 🚀 Production Deployment
+
+### 1. Build
 ```bash
 npm run build
 ```
 
-### Deploy to Vercel
+### 2. Verify Build
 ```bash
-vercel deploy
+npm run preview
 ```
 
-### Deploy to Netlify
+### 3. Deploy to Vercel
+```bash
+vercel deploy --prod
+```
+
+### 4. Deploy to Netlify
 ```bash
 netlify deploy --prod --dir=dist
 ```
 
-### Environment Variables on Hosting
-Set these in your hosting platform:
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
-- `VITE_API_URL` (update to production backend URL)
+### 5. Deploy via Docker (Recommended)
+```bash
+# Build and tag image
+docker build -t your-registry/karta-connect-frontend:latest .
 
-## Common Issues
+# Push to registry
+docker push your-registry/karta-connect-frontend:latest
+
+# Deploy (using your platform's CLI or manual deployment)
+```
+
+### Production Environment Variables
+Set these in your hosting platform's environment configuration:
+- `VITE_SUPABASE_URL` - Supabase project URL
+- `VITE_SUPABASE_ANON_KEY` - Supabase anon key
+- `VITE_API_URL` - Production backend API URL (e.g., `https://api.yourdomain.com`)
+
+## 🔗 Backend Repository
+
+This frontend works with the **KartaConnect Backend API**. To set up the complete system:
+
+### Backend Setup
+1. Clone the backend repository: `https://github.com/VAIBHAV-VOLT/karta_connect_backend`
+2. Follow backend README for setup instructions
+3. Ensure backend is running before starting frontend development
+4. Update `VITE_API_URL` to point to your backend instance
+
+### API Documentation
+The backend API documentation is available at `{VITE_API_URL}/api/docs`
+
+### Required Backend Endpoints
+- `POST /api/auth/resolve-login` - Check if email exists
+- `POST /api/auth/signup` - Create new user
+- `POST /api/auth/login` - Login user
+- `GET /api/student/profile` - Get student profile
+- `GET /api/company/profile` - Get company profile
+- `GET /api/jobs` - List job opportunities
+- `POST /api/applications` - Submit application
+- And more... (see backend documentation)
+
+## 🐛 Troubleshooting
 
 ### CORS Errors
-Make sure `VITE_API_URL` matches the backend's expected CORS origin and backend's `FRONTEND_URL` matches this frontend.
+**Problem:** "Access to XMLHttpRequest blocked by CORS policy"
 
-### Supabase Auth Errors
-Verify `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are correct.
+**Solution:**
+- Ensure `VITE_API_URL` in frontend matches backend's expected origin
+- Verify backend has CORS configured for this frontend's domain
+- Check backend's `CORS_ORIGIN` or similar CORS configuration
 
-### Build Errors
-Clear cache and reinstall dependencies:
+### Supabase Connection Issues
+**Problem:** "Cannot connect to Supabase" or auth errors
+
+**Solution:**
+- Verify `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are correct
+- Check Supabase project is active
+- Verify API Keys have not been revoked
+- Check browser console for detailed error messages
+
+### Blank Page After Build
+**Problem:** Production build shows blank page
+
+**Solution:**
+- Clear browser cache (Ctrl+Shift+Delete)
+- Check browser console for JavaScript errors
+- Verify all environment variables are set correctly
+- Try: `npm run build && npm run preview`
+
+### Build Fails
+**Problem:** Build command fails with errors
+
+**Solution:**
 ```bash
+# Clear and reinstall dependencies
 rm -rf node_modules package-lock.json
 npm install
+
+# Clear Vite cache
+rm -rf .vite
+
+# Try building again
 npm run build
 ```
 
-## License
+### Port Already in Use
+**Problem:** "Port 5173 is already in use"
+
+**Solution:**
+```bash
+# Change port in .env
+VITE_PORT=5174
+
+# Or kill the process using the port
+# Windows: netstat -ano | findstr :5173
+# macOS/Linux: lsof -i :5173
+```
+
+### Hot Module Replacement (HMR) Not Working
+**Problem:** Changes not reflecting without page reload
+
+**Solution:**
+- Ensure you're running `npm run dev` (not build)
+- Check firewall settings if using remote development
+- Restart dev server: Stop process and run `npm run dev` again
+
+### Typescript Errors
+**Problem:** TypeScript compilation errors
+
+**Solution:**
+- Check `tsconfig.json` is properly configured
+- Run: `npm run build` to see detailed errors
+- Type errors won't block dev server, but will block production builds
+
+## 📚 Learning Resources
+
+- [React Documentation](https://react.dev)
+- [TanStack Router Guide](https://tanstack.com/router)
+- [Tailwind CSS](https://tailwindcss.com)
+- [Radix UI Components](https://radix-ui.com)
+- [Supabase Docs](https://supabase.com/docs)
+- [TanStack Query](https://tanstack.com/query)
+
+## 🤝 Contributing
+
+1. Create a new branch: `git checkout -b feature/your-feature`
+2. Make your changes
+3. Run linting: `npm run lint`
+4. Format code: `npm run format`
+5. Commit with clear messages
+6. Push and create a Pull Request
+
+## 📋 Code Style
+
+- **Linting:** ESLint configured in `eslint.config.js`
+- **Formatting:** Prettier for consistent formatting
+- **Pre-commit hooks:** Consider setting up Husky to run lint on commit
+
+## 🆘 Support & Issues
+
+- For frontend issues, open an issue in this repository
+- For backend API issues, see the [Backend Repository](https://github.com/VAIBHAV-VOLT/karta_connect_backend)
+- Check existing issues before creating a new one
+
+## 📄 License
+
 ISC
