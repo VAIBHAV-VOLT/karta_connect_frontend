@@ -22,6 +22,7 @@ import { Route as AuthenticatedCompanyScholarsRouteImport } from "./routes/_auth
 import { Route as AuthenticatedStudentProgressRouteImport } from "./routes/_authenticated.student.progress";
 import { Route as AuthenticatedStudentSupportRouteImport } from "./routes/_authenticated.student.support";
 import { Route as AuthenticatedAdminAnalyticsRouteImport } from "./routes/_authenticated.admin.analytics";
+import { Route as AuthenticatedAdminModerationRouteImport } from "./routes/_authenticated.admin.moderation";
 import { Route as AuthenticatedStudentJobsIndexRouteImport } from "./routes/_authenticated.student.jobs.index";
 import { Route as AuthenticatedAdminStudentsIndexRouteImport } from "./routes/_authenticated.admin.students.index";
 import { Route as AuthenticatedAdminPostsIndexRouteImport } from "./routes/_authenticated.admin.posts.index";
@@ -149,6 +150,12 @@ const AuthenticatedAdminAnalyticsRoute = AuthenticatedAdminAnalyticsRouteImport.
   getParentRoute: () => AuthenticatedRoute,
 });
 
+const AuthenticatedAdminModerationRoute = AuthenticatedAdminModerationRouteImport.update({
+  id: "/admin/moderation",
+  path: "/admin/moderation",
+  getParentRoute: () => AuthenticatedRoute,
+});
+
 const AuthenticatedStudentJobsIndexRoute = AuthenticatedStudentJobsIndexRouteImport.update({
   id: "/student/jobs/",
   path: "/student/jobs/",
@@ -201,6 +208,7 @@ const AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute,
   AuthenticatedSettingsRoute,
   AuthenticatedAdminAnalyticsRoute,
+  AuthenticatedAdminModerationRoute,
   AuthenticatedCompanyScholarsRoute,
   AuthenticatedCompanyApplicationsRoute,
   AuthenticatedCompanyPostsRoute,
