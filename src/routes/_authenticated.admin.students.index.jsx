@@ -10,7 +10,7 @@ import { Users, User, Search, ShieldAlert, ShieldCheck, Trash2, Loader2, Plus, U
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { requireAdmin } from "@/lib/route-guards";
-import { authenticatedFetch } from "@/lib/api-client";
+import { authenticatedFetch, buildApiUrl } from "@/lib/api-client";
 import * as XLSX from "xlsx";
 
 export const Route = createFileRoute("/_authenticated/admin/students/")({

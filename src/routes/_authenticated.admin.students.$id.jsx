@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2, ArrowLeft, User, BookOpen, Award, FileText, ExternalLink, ShieldCheck, ShieldAlert } from "lucide-react";
+import { Loader2, ArrowLeft, User, BookOpen, Award, FileText, ExternalLink, ShieldCheck, ShieldAlert, Linkedin } from "lucide-react";
 import { requireAdmin } from "@/lib/route-guards";
 export const Route = createFileRoute("/_authenticated/admin/students/$id")({
     beforeLoad: requireAdmin,
@@ -29,6 +29,7 @@ function AdminStudentProfileDetailsPage() {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [alteringStatus, setAlteringStatus] = useState(false);
+  const [showAllSkills, setShowAllSkills] = useState(false);
   async function loadData() {
     if (!profileId)
       return;
@@ -231,10 +232,28 @@ function AdminStudentProfileDetailsPage() {
           <CardHeader>
             <CardTitle>Declared Skills</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-wrap gap-1.5">
-            {profile.skills?.length > 0 ? (profile.skills.map((skill) => (<span key={skill} className="bg-primary/10 text-primary px-2.5 py-1 rounded-full text-xs font-semibold capitalize">
-              {skill}
-            </span>))) : (<span className="text-xs text-muted-foreground">No skills listed.</span>)}
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap gap-1.5">
+              {profile.skills?.length > 0 ? (
+                (showAllSkills ? profile.skills : profile.skills.slice(0, 10)).map((skill) => (
+                  <span key={skill} className="bg-primary/10 text-primary px-2.5 py-1 rounded-full text-xs font-semibold capitalize">
+                    {skill}
+                  </span>
+                ))
+              ) : (
+                <span className="text-xs text-muted-foreground">No skills listed.</span>
+              )}
+            </div>
+            {profile.skills?.length > 10 && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="w-full text-xs h-8 text-muted-foreground hover:text-foreground"
+                onClick={() => setShowAllSkills(!showAllSkills)}
+              >
+                {showAllSkills ? "Show Less" : `+ ${profile.skills.length - 10} More Skills`}
+              </Button>
+            )}
           </CardContent>
         </Card>
 
@@ -247,6 +266,44 @@ function AdminStudentProfileDetailsPage() {
             <a href={getResumeDownloadUrl(profile.resume_url)} target="_blank" rel="noopener noreferrer" className="w-full block">
               <Button variant="outline" size="sm" className="w-full flex items-center justify-center gap-2">
                 View Resume <ExternalLink className="h-4 w-4" />
+              </Button>
+            </a>
+          </CardContent>
+        </Card>)}
+
+        {profile.linkedin_url && (<Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-1.5"><Linkedin className="h-5 w-5 text-blue-600" /> LinkedIn Profile</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground mb-4">Visit candidate's professional LinkedIn profile.</p>
+            <a 
+              href={profile.linkedin_url.startsWith('http') ? profile.linkedin_url : `https://${profile.linkedin_url}`} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="w-full block"
+            >
+              <Button variant="outline" size="sm" className="w-full flex items-center justify-center gap-2">
+                View LinkedIn <ExternalLink className="h-4 w-4" />
+              </Button>
+            </a>
+          </CardContent>
+        </Card>)}
+
+        {profile.certificate_url && (<Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-1.5"><Award className="h-5 w-5 text-yellow-600" /> Certificate</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground mb-4">View candidate's uploaded certificate or credential.</p>
+            <a 
+              href={profile.certificate_url.startsWith('http') ? profile.certificate_url : `https://${profile.certificate_url}`} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="w-full block"
+            >
+              <Button variant="outline" size="sm" className="w-full flex items-center justify-center gap-2">
+                View Certificate <ExternalLink className="h-4 w-4" />
               </Button>
             </a>
           </CardContent>

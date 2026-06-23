@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { getResumeDownloadUrl } from "@/lib/storage-paths";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, User, BookOpen, Award, FileText, ExternalLink } from "lucide-react";
+import { Loader2, User, BookOpen, Award, FileText, ExternalLink, Share2 } from "lucide-react";
+import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/students/$id")({
     component: StudentDetails,
 });
@@ -13,7 +14,8 @@ function StudentDetails() {
     const [profile, setProfile] = useState(null);
     const [resumeDownloadUrl, setResumeDownloadUrl] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
+    const [error, setError] = useState(null);
+    const [copyingUrl, setCopyingUrl] = useState(false);
     function normalizeUrl(url) {
       if (!url) return null;
       return url.startsWith("http://") || url.startsWith("https://") ? url : `https://${url}`;
@@ -68,6 +70,22 @@ function StudentDetails() {
             canceled = true;
         };
     }, [profile?.resume_url]);
+
+    async function copyProfileUrl() {
+        setCopyingUrl(true);
+        try {
+            const shareUrl = `${window.location.origin}/students/${profileId}`;
+            await navigator.clipboard.writeText(shareUrl);
+            toast.success("Profile URL copied to clipboard!");
+        }
+        catch (err) {
+            toast.error("Failed to copy URL.");
+        }
+        finally {
+            setTimeout(() => setCopyingUrl(false), 2000);
+        }
+    }
+
     if (loading) {
         return (<div className="flex h-[50vh] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary"/>
@@ -81,7 +99,7 @@ function StudentDetails() {
       </div>);
     }
     return (<div className="space-y-6 max-w-6xl mx-auto animate-in fade-in duration-500">
-      <div className="flex flex-col sm:flex-row justify-between items-start gap-4 border-b pb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4">
         <div className="flex items-center gap-4">
           <div className="h-16 w-16 rounded-full border bg-muted flex items-center justify-center overflow-hidden shrink-0">
             {profile.avatar_url ? (<img src={profile.avatar_url} alt="Avatar" className="h-full w-full object-cover"/>) : (<User className="h-8 w-8 text-muted-foreground"/>)}
@@ -91,6 +109,10 @@ function StudentDetails() {
             <p className="text-sm text-muted-foreground">{profile.email}</p>
           </div>
         </div>
+        <Button variant="outline" onClick={copyProfileUrl} disabled={copyingUrl}>
+          <Share2 className="w-4 h-4 mr-2" />
+          {copyingUrl ? "Copied!" : "Share Profile"}
+        </Button>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">

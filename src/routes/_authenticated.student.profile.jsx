@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { requireStudent } from "@/lib/route-guards";
-import { Loader2, User, BookOpen, Award, FileText, Upload, X, ExternalLink, Eye, Briefcase } from "lucide-react";
+import { Loader2, User, BookOpen, Award, FileText, Upload, X, ExternalLink, Eye, Briefcase, Share2 } from "lucide-react";
 import Confetti from 'react-confetti';
 import { useWindowSize } from 'react-use';
 
@@ -36,7 +36,7 @@ const profileSchema = z.object({
   course: z.string()
     .min(2, "Course must be at least 2 characters")
     .max(100, "Course must be at most 100 characters"),
-  yearOfStudy: z.enum(["1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year", "Postgraduate"], {
+  yearOfStudy: z.enum(["1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year", "Postgraduate", "Graduated"], {
     errorMap: () => ({ message: "Please select a valid Year of Study" })
   }),
   graduationYear: z.string()
@@ -88,6 +88,7 @@ function StudentProfilePage() {
     const [showConfetti, setShowConfetti] = useState(false);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [copyingUrl, setCopyingUrl] = useState(false);
     const [uploadingResume, setUploadingResume] = useState(false);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
     const [uploadingCertificate, setUploadingCertificate] = useState(false);
@@ -275,6 +276,21 @@ function StudentProfilePage() {
         }
         finally {
             setUploadingResume(false);
+        }
+    }
+
+    async function copyProfileUrl() {
+        setCopyingUrl(true);
+        try {
+            const shareUrl = `${window.location.origin}/students/${user.id}`;
+            await navigator.clipboard.writeText(shareUrl);
+            toast.success("Profile URL copied to clipboard!");
+        }
+        catch (err) {
+            toast.error("Failed to copy URL.");
+        }
+        finally {
+            setTimeout(() => setCopyingUrl(false), 2000);
         }
     }
 
@@ -583,9 +599,16 @@ setCertificateUrl(publicUrlData.publicUrl);
       <>
         {showConfetti && <Confetti width={width} height={height} numberOfPieces={250} gravity={0.15} style={{ zIndex: 9999, position: 'fixed', top: 0, left: 0 }} />}
         <div className="space-y-8 animate-in fade-in duration-500">
-      <div>
-        <h1 className="text-3xl font-extrabold tracking-tight">Edit Student Profile</h1>
-        <p className="text-muted-foreground">Keep your academic and professional details updated for companies.</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight">Edit Student Profile</h1>
+          <p className="text-muted-foreground">Keep your academic and professional details updated for companies.</p>
+        </div>
+        <Button variant="outline" onClick={copyProfileUrl} disabled={copyingUrl}>
+          <Share2 className="w-4 h-4 mr-2" />
+          {copyingUrl ? "Copied!" : "Share Profile"}
+        </Button>
+      </div>
 
         {/* Profile Completion Score */}
         {(profileScore < 100 || missingOptional.length > 0) && (
@@ -635,7 +658,6 @@ setCertificateUrl(publicUrlData.publicUrl);
             )}
           </div>
         )}
-      </div>
       <form onSubmit={handleSave} className="space-y-6">
 
   <div className="flex justify-end mb-4">
