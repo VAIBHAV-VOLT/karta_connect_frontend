@@ -3,10 +3,22 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { toast } from "sonner";
 import {
   Users,
@@ -23,7 +35,14 @@ import {
   MapPin,
   Calendar,
 } from "lucide-react";
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from "recharts";
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+} from "recharts";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardDispatcher,
 });
@@ -55,17 +74,27 @@ function AdminDashboard() {
   async function fetchStats() {
     setLoading(true);
     try {
-      const [wl, sp, cp, jp, app, studentProfilesRes, companiesRes] = await Promise.all([
-        supabase.from("student_whitelist").select("id", { count: "exact", head: true }),
-        supabase.from("student_profiles").select("user_id", { count: "exact", head: true }),
-        supabase.from("companies").select("id", { count: "exact", head: true }),
-        supabase.from("job_posts").select("id, type"),
-        supabase.from("applications").select("id", { count: "exact", head: true }),
-        supabase.from("student_profiles").select("created_at"),
-        supabase.from("companies").select("created_at")
-      ]);
+      const [wl, sp, cp, jp, app, studentProfilesRes, companiesRes] =
+        await Promise.all([
+          supabase
+            .from("student_whitelist")
+            .select("id", { count: "exact", head: true }),
+          supabase
+            .from("student_profiles")
+            .select("user_id", { count: "exact", head: true }),
+          supabase
+            .from("companies")
+            .select("id", { count: "exact", head: true }),
+          supabase.from("job_posts").select("id, type"),
+          supabase
+            .from("applications")
+            .select("id", { count: "exact", head: true }),
+          supabase.from("student_profiles").select("created_at"),
+          supabase.from("companies").select("created_at"),
+        ]);
       const jobsCount = jp.data?.filter((p) => p.type === "job").length || 0;
-      const internshipsCount = jp.data?.filter((p) => p.type === "internship").length || 0;
+      const internshipsCount =
+        jp.data?.filter((p) => p.type === "internship").length || 0;
       setStats({
         whitelistCount: wl.count || 0,
         registeredStudents: sp.count || 0,
@@ -78,15 +107,28 @@ function AdminDashboard() {
       // Calculate chart data for Registration Growth
       const currentYear = new Date().getFullYear();
       const currentMonth = new Date().getMonth(); // 0-11
-      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const monthNames = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
 
       const countsByMonth = Array.from({ length: 12 }, (_, i) => ({
         name: monthNames[i],
         Students: 0,
-        Companies: 0
+        Companies: 0,
       }));
 
-      studentProfilesRes.data?.forEach(profile => {
+      studentProfilesRes.data?.forEach((profile) => {
         if (!profile.created_at) return;
         const date = new Date(profile.created_at);
         if (date.getFullYear() === currentYear) {
@@ -94,7 +136,7 @@ function AdminDashboard() {
         }
       });
 
-      companiesRes.data?.forEach(company => {
+      companiesRes.data?.forEach((company) => {
         if (!company.created_at) return;
         const date = new Date(company.created_at);
         if (date.getFullYear() === currentYear) {
@@ -112,7 +154,7 @@ function AdminDashboard() {
         chartData.push({
           name: monthNames[i],
           Students: cumulativeStudents,
-          Companies: cumulativeCompanies
+          Companies: cumulativeCompanies,
         });
       }
       setRegistrationsData(chartData);
@@ -163,7 +205,9 @@ function AdminDashboard() {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Admin Dashboard</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">
+            Admin Dashboard
+          </h1>
           <p className="text-muted-foreground">
             Manage whitelists, review portal metrics, and system activity.
           </p>
@@ -215,7 +259,9 @@ function AdminDashboard() {
             <Briefcase className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.jobs + stats.internships}</div>
+            <div className="text-2xl font-bold">
+              {stats.jobs + stats.internships}
+            </div>
             <p className="text-xs text-muted-foreground mt-1">
               {stats.jobs} Jobs, {stats.internships} Internships listed.
             </p>
@@ -279,7 +325,11 @@ function AdminDashboard() {
                   />
                 </div>
               </div>
-              <Button type="submit" className="w-full" disabled={submittingWhitelist}>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={submittingWhitelist}
+              >
                 {submittingWhitelist ? "Adding..." : "Add to Whitelist"}
               </Button>
             </form>
@@ -290,7 +340,8 @@ function AdminDashboard() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" /> Registration Growth
+              <TrendingUp className="h-5 w-5 text-primary" /> Registration
+              Growth
             </CardTitle>
             <CardDescription>
               Cumulative registered users over current calendar period.
@@ -300,9 +351,23 @@ function AdminDashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={registrationsData}>
                 <defs>
-                  <linearGradient id="colorStudents" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  <linearGradient
+                    id="colorStudents"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop
+                      offset="5%"
+                      stopColor="hsl(var(--primary))"
+                      stopOpacity={0.4}
+                    />
+                    <stop
+                      offset="95%"
+                      stopColor="hsl(var(--primary))"
+                      stopOpacity={0}
+                    />
                   </linearGradient>
                 </defs>
                 <XAxis
@@ -312,7 +377,12 @@ function AdminDashboard() {
                   tickLine={false}
                   axisLine={false}
                 />
-                <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis
+                  stroke="#888888"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                />
                 <Tooltip />
                 <Area
                   type="monotone"
@@ -321,7 +391,12 @@ function AdminDashboard() {
                   fillOpacity={1}
                   fill="url(#colorStudents)"
                 />
-                <Area type="monotone" dataKey="Companies" stroke="#a8a29e" fill="none" />
+                <Area
+                  type="monotone"
+                  dataKey="Companies"
+                  stroke="#a8a29e"
+                  fill="none"
+                />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
@@ -380,7 +455,8 @@ function CompanyDashboard({ userId }) {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-6">
-            Please navigate to the profile section to establish your company details and logo.
+            Please navigate to the profile section to establish your company
+            details and logo.
           </p>
           <Link to="/company/profile">
             <Button>Set Up Company Profile</Button>
@@ -393,7 +469,9 @@ function CompanyDashboard({ userId }) {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Welcome, {company.name}!</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">
+            Welcome, {company.name}!
+          </h1>
           <p className="text-muted-foreground">
             Manage your job and internship openings and candidates.
           </p>
@@ -405,7 +483,7 @@ function CompanyDashboard({ userId }) {
         </Link>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -430,10 +508,63 @@ function CompanyDashboard({ userId }) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {jobs.reduce((acc, job) => acc + (job.applications?.[0]?.count || 0), 0)}
+              {jobs.reduce(
+                (acc, job) => acc + (job.applications?.[0]?.count || 0),
+                0,
+              )}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Applications received for your openings.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Active Posts
+            </CardTitle>
+            🟢
+          </CardHeader>
+
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {jobs.filter((job) => job.active).length}
+            </div>
+
+            <p className="text-xs text-muted-foreground mt-1">
+              Currently accepting applications.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Upcoming Deadlines
+            </CardTitle>
+            ⏳
+          </CardHeader>
+
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {
+                jobs.filter((job) => {
+                  if (!job.deadline) return false;
+
+                  const today = new Date();
+
+                  const deadline = new Date(job.deadline);
+
+                  const diffDays = (deadline - today) / (1000 * 60 * 60 * 24);
+
+                  return diffDays >= 0 && diffDays <= 7;
+                }).length
+              }
+            </div>
+
+            <p className="text-xs text-muted-foreground mt-1">
+              Posts expiring this week.
             </p>
           </CardContent>
         </Card>
@@ -459,11 +590,38 @@ function CompanyDashboard({ userId }) {
                   className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
                 >
                   <div>
-                    <h4 className="font-semibold text-foreground">{job.title}</h4>
-                    <div className="flex gap-2 text-xs text-muted-foreground mt-1">
-                      <span className="capitalize">{job.type}</span>
-                      <span>•</span>
-                      <span>Deadline: {job.deadline}</span>
+                    <h4 className="font-semibold text-foreground">
+                      {job.title}
+                    </h4>
+                    <div className="flex gap-2 text-xs mt-2 flex-wrap">
+                      <span
+                        className="
+    border
+    border-slate-700
+    text-slate-300
+    px-3
+    py-1
+    rounded-full
+    font-medium
+    capitalize
+    "
+                      >
+                        {job.type}
+                      </span>
+
+                      <span
+                        className="
+    border
+    border-yellow-700
+    text-yellow-100
+    px-3
+    py-1
+    rounded-full
+    font-medium
+    "
+                      >
+                        ⏳ {job.deadline}
+                      </span>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
@@ -501,7 +659,7 @@ function StudentDashboard({ userId }) {
   const [showHiringPartners, setShowHiringPartners] = useState(false);
   const [gettingAiMatch, setGettingAiMatch] = useState(false);
   const [aiRecommendations, setAiRecommendations] = useState([]);
-  
+
   async function getAiRecommendations() {
     if (!userId) return;
     setGettingAiMatch(true);
@@ -510,16 +668,18 @@ function StudentDashboard({ userId }) {
       const token = session?.session?.access_token;
       if (!token) throw new Error("No access token available.");
 
-      const apiUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3001";
+      const apiUrl =
+        import.meta.env.VITE_BACKEND_URL || "http://localhost:3001";
       const res = await fetch(`${apiUrl}/api/student/recommendations`, {
         method: "GET",
         headers: {
-          "Authorization": `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to get AI recommendations");
+      if (!res.ok)
+        throw new Error(data.error || "Failed to get AI recommendations");
 
       setAiRecommendations(data.recommendations || []);
       toast.success("AI matched your profile with opportunities!");
@@ -601,7 +761,12 @@ function StudentDashboard({ userId }) {
         const company = (job.company?.name || "").toLowerCase();
         const skills = (job.required_skills || []).join(" ").toLowerCase();
         const desc = (job.description || "").toLowerCase();
-        return title.includes(q) || company.includes(q) || skills.includes(q) || desc.includes(q);
+        return (
+          title.includes(q) ||
+          company.includes(q) ||
+          skills.includes(q) ||
+          desc.includes(q)
+        );
       }),
     );
   }, [jobs, query]);
@@ -641,7 +806,8 @@ function StudentDashboard({ userId }) {
       </div>
     );
   }
-  const isProfileIncomplete = !profile?.name || !profile?.university || !profile?.course;
+  const isProfileIncomplete =
+    !profile?.name || !profile?.university || !profile?.course;
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -649,11 +815,20 @@ function StudentDashboard({ userId }) {
           <h1 className="text-3xl font-extrabold tracking-tight">
             Welcome back, {profile?.name || "Student"}!
           </h1>
+          <p className="text-sm text-muted-foreground mt-2">
+            🚀 Your company currently has
+            {jobs.length}
+            published openings.
+          </p>
           <p className="text-muted-foreground font-medium">
             Find verified jobs and track your submissions.
           </p>
         </div>
-        <Button onClick={() => setShowHiringPartners(true)} variant="outline" className="flex items-center gap-2">
+        <Button
+          onClick={() => setShowHiringPartners(true)}
+          variant="outline"
+          className="flex items-center gap-2"
+        >
           <Building2 className="h-4 w-4" /> Hiring Partners
         </Button>
       </div>
@@ -662,10 +837,13 @@ function StudentDashboard({ userId }) {
         <Card className="border-warning bg-warning/5 text-warning-foreground">
           <CardHeader className="pb-2 flex flex-row items-center gap-3">
             <Sparkles className="h-5 w-5 text-warning" />
-            <CardTitle className="text-md font-bold">Profile Incomplete</CardTitle>
+            <CardTitle className="text-md font-bold">
+              Profile Incomplete
+            </CardTitle>
           </CardHeader>
           <CardContent className="text-sm">
-            Please fill in all required academic details in your profile to enable job applications.
+            Please fill in all required academic details in your profile to
+            enable job applications.
             <div className="mt-3">
               <Link to="/student/profile">
                 <Button size="sm" variant="outline">
@@ -695,13 +873,19 @@ function StudentDashboard({ userId }) {
                     onChange={(e) => setQuery(e.target.value)}
                   />
                 </div>
-                <Button 
-                  onClick={getAiRecommendations} 
+                <Button
+                  onClick={getAiRecommendations}
                   disabled={gettingAiMatch}
                   className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:opacity-90 text-white font-bold border-0 shrink-0"
                 >
-                  {gettingAiMatch ? <Loader2 className="h-4 w-4 animate-spin" /> : "✨"}
-                  <span className="hidden sm:inline">{gettingAiMatch ? "Matching..." : "AI Match"}</span>
+                  {gettingAiMatch ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "✨"
+                  )}
+                  <span className="hidden sm:inline">
+                    {gettingAiMatch ? "Matching..." : "AI Match"}
+                  </span>
                 </Button>
               </div>
             </CardHeader>
@@ -714,14 +898,37 @@ function StudentDashboard({ userId }) {
                   </h2>
                   <div className="grid gap-4 sm:grid-cols-2">
                     {aiRecommendations.slice(0, 2).map((job) => (
-                      <Card key={`ai-${job.id}`} className="flex flex-col hover:shadow-md transition-shadow cursor-pointer border-purple-500/30 bg-purple-500/5" onClick={() => openJob({...job, company: job.companies || job.company})}>
+                      <Card
+                        key={`ai-${job.id}`}
+                        className="flex flex-col hover:shadow-md transition-shadow cursor-pointer border-purple-500/30 bg-purple-500/5"
+                        onClick={() =>
+                          openJob({
+                            ...job,
+                            company: job.companies || job.company,
+                          })
+                        }
+                      >
                         <CardHeader className="pb-3">
                           <div className="flex justify-between items-start gap-2">
                             <div className="h-10 w-10 border rounded bg-background flex items-center justify-center overflow-hidden shrink-0">
-                              {(job.companies?.logo_url || job.company?.logo_url) ? (<img src={job.companies?.logo_url || job.company?.logo_url} alt={job.companies?.name || job.company?.name} className="h-full w-full object-cover"/>) : (<Briefcase className="h-5 w-5 text-muted-foreground"/>)}
+                              {job.companies?.logo_url ||
+                              job.company?.logo_url ? (
+                                <img
+                                  src={
+                                    job.companies?.logo_url ||
+                                    job.company?.logo_url
+                                  }
+                                  alt={job.companies?.name || job.company?.name}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <Briefcase className="h-5 w-5 text-muted-foreground" />
+                              )}
                             </div>
                             <div className="space-y-1 text-right flex flex-col items-end">
-                              <span className={`text-[10px] border px-2 py-0.5 rounded-full uppercase font-bold tracking-wider ${job.type === "job" ? "bg-blue-500/10 text-blue-500 border-blue-500/20" : "bg-purple-500/10 text-purple-500 border-purple-500/20"}`}>
+                              <span
+                                className={`text-[10px] border px-2 py-0.5 rounded-full uppercase font-bold tracking-wider ${job.type === "job" ? "bg-blue-500/10 text-blue-500 border-blue-500/20" : "bg-purple-500/10 text-purple-500 border-purple-500/20"}`}
+                              >
                                 {job.type}
                               </span>
                               <span className="text-[10px] bg-green-500/10 text-green-600 border border-green-500/20 px-2 py-0.5 rounded-full font-bold">
@@ -729,11 +936,19 @@ function StudentDashboard({ userId }) {
                               </span>
                             </div>
                           </div>
-                          <CardTitle className="text-base font-bold mt-3 line-clamp-1">{job.title}</CardTitle>
-                          <CardDescription className="text-xs line-clamp-1">{job.companies?.name || job.company?.name || "Company partner"}</CardDescription>
+                          <CardTitle className="text-base font-bold mt-3 line-clamp-1">
+                            {job.title}
+                          </CardTitle>
+                          <CardDescription className="text-xs line-clamp-1">
+                            {job.companies?.name ||
+                              job.company?.name ||
+                              "Company partner"}
+                          </CardDescription>
                         </CardHeader>
                         <CardContent className="pb-3 flex-1 hidden sm:block">
-                          <p className="text-xs text-muted-foreground line-clamp-2">{job.description}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-2">
+                            {job.description}
+                          </p>
                         </CardContent>
                       </Card>
                     ))}
@@ -749,7 +964,9 @@ function StudentDashboard({ userId }) {
               ) : (
                 <div className="max-h-[60vh] overflow-y-auto space-y-4 pt-2">
                   {filteredJobs.map((job) => {
-                    const isApplied = applications.some((app) => app.post_id === job.id);
+                    const isApplied = applications.some(
+                      (app) => app.post_id === job.id,
+                    );
                     const isSaved = savedPostIds.includes(job.id);
                     return (
                       <div
@@ -789,7 +1006,11 @@ function StudentDashboard({ userId }) {
                           </div>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <Button size="sm" className="font-semibold" onClick={() => openJob(job)}>
+                          <Button
+                            size="sm"
+                            className="font-semibold"
+                            onClick={() => openJob(job)}
+                          >
                             View Details
                           </Button>
                         </div>
@@ -823,11 +1044,11 @@ function StudentDashboard({ userId }) {
               companies.map((c) => {
                 const initials = c.name
                   ? c.name
-                    .split(" ")
-                    .map((w) => w[0])
-                    .slice(0, 2)
-                    .join("")
-                    .toUpperCase()
+                      .split(" ")
+                      .map((w) => w[0])
+                      .slice(0, 2)
+                      .join("")
+                      .toUpperCase()
                   : "CO";
                 return (
                   <div
@@ -847,7 +1068,10 @@ function StudentDashboard({ userId }) {
                         )}
                       </div>
                       <div className="min-w-0">
-                        <h4 className="font-bold text-foreground text-sm truncate" title={c.name}>
+                        <h4
+                          className="font-bold text-foreground text-sm truncate"
+                          title={c.name}
+                        >
                           {c.name}
                         </h4>
                         <p className="text-xs text-muted-foreground font-medium truncate">
@@ -855,7 +1079,7 @@ function StudentDashboard({ userId }) {
                         </p>
                         {c.location && (
                           <p className="text-[10px] text-muted-foreground/80 font-medium truncate mt-0.5">
-                            <MapPin className="h-3 w-3 inline-block mr-0.5"/>
+                            <MapPin className="h-3 w-3 inline-block mr-0.5" />
                             {c.location}
                           </p>
                         )}
@@ -886,9 +1110,16 @@ function StudentDashboard({ userId }) {
         <JobDetailsSheet
           job={selectedJob}
           profile={profile}
-          applicationsMap={new Map(applications.map((a) => [a.post_id, a.status]))}
+          applicationsMap={
+            new Map(applications.map((a) => [a.post_id, a.status]))
+          }
           onClose={() => setSelectedJob(null)}
-          onApplied={(jobId) => setApplications((prev) => [...prev, { post_id: jobId, status: "applied" }])}
+          onApplied={(jobId) =>
+            setApplications((prev) => [
+              ...prev,
+              { post_id: jobId, status: "applied" },
+            ])
+          }
         />
       )}
     </div>
@@ -897,13 +1128,20 @@ function StudentDashboard({ userId }) {
 // ----------------------------------------------------
 // Student details sheet (used in dashboard)
 // ----------------------------------------------------
-function JobDetailsSheet({ job, profile, applicationsMap, onClose, onApplied }) {
+function JobDetailsSheet({
+  job,
+  profile,
+  applicationsMap,
+  onClose,
+  onApplied,
+}) {
   const { user } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   if (!job) return null;
 
   const isApplied = applicationsMap.has(job.id);
-  const isProfileIncomplete = !profile?.name || !profile?.university || !profile?.course;
+  const isProfileIncomplete =
+    !profile?.name || !profile?.university || !profile?.course;
   const isResumeMissing = !profile?.resume_url;
 
   async function handleApply() {
@@ -973,11 +1211,14 @@ function JobDetailsSheet({ job, profile, applicationsMap, onClose, onApplied }) 
             <div>
               <div className="text-xs text-muted-foreground">Location</div>
               <div className="font-semibold flex items-center gap-1">
-                <MapPin className="h-4 w-4 text-primary" /> {job.location || "Remote"}
+                <MapPin className="h-4 w-4 text-primary" />{" "}
+                {job.location || "Remote"}
               </div>
             </div>
             <div>
-              <div className="text-xs text-muted-foreground">Application Deadline</div>
+              <div className="text-xs text-muted-foreground">
+                Application Deadline
+              </div>
               <div className="font-semibold flex items-center gap-1">
                 <Calendar className="h-4 w-4 text-primary" /> {job.deadline}
               </div>
@@ -1041,7 +1282,10 @@ function JobDetailsSheet({ job, profile, applicationsMap, onClose, onApplied }) 
             </p>
           )}
         </div>
-        <button className="absolute top-3 right-3 text-muted-foreground" onClick={onClose}>
+        <button
+          className="absolute top-3 right-3 text-muted-foreground"
+          onClick={onClose}
+        >
           Close
         </button>
       </div>
