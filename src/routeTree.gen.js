@@ -19,9 +19,9 @@ import { Route as AuthenticatedCompanyProfileRouteImport } from "./routes/_authe
 import { Route as AuthenticatedCompanyPostsRouteImport } from "./routes/_authenticated.company.posts";
 import { Route as AuthenticatedCompanyApplicationsRouteImport } from "./routes/_authenticated.company.applications";
 import { Route as AuthenticatedCompanyScholarsRouteImport } from "./routes/_authenticated.company.scholars";
-import { Route as AuthenticatedCompanySupportRouteImport } from "./routes/_authenticated.company.support";
+import { Route as AuthenticatedStudentProgressRouteImport } from "./routes/_authenticated.student.progress";
+import { Route as AuthenticatedStudentSupportRouteImport } from "./routes/_authenticated.student.support";
 import { Route as AuthenticatedAdminAnalyticsRouteImport } from "./routes/_authenticated.admin.analytics";
-import { Route as AuthenticatedAdminModerationRouteImport } from "./routes/_authenticated.admin.moderation";
 import { Route as AuthenticatedStudentJobsIndexRouteImport } from "./routes/_authenticated.student.jobs.index";
 import { Route as AuthenticatedAdminStudentsIndexRouteImport } from "./routes/_authenticated.admin.students.index";
 import { Route as AuthenticatedAdminPostsIndexRouteImport } from "./routes/_authenticated.admin.posts.index";
@@ -90,64 +90,56 @@ const AuthenticatedStudentsIdRoute = AuthenticatedStudentsIdRouteImport.update({
   getParentRoute: () => AuthenticatedRoute,
 });
 
-const AuthenticatedStudentSavedRoute =
-  AuthenticatedStudentSavedRouteImport.update({
-    id: "/student/saved",
-    path: "/student/saved",
-    getParentRoute: () => AuthenticatedRoute,
-  });
+const AuthenticatedStudentSavedRoute = AuthenticatedStudentSavedRouteImport.update({
+  id: "/student/saved",
+  path: "/student/saved",
+  getParentRoute: () => AuthenticatedRoute,
+});
 
-const AuthenticatedStudentProfileRoute =
-  AuthenticatedStudentProfileRouteImport.update({
-    id: "/student/profile",
-    path: "/student/profile",
-    getParentRoute: () => AuthenticatedRoute,
-  });
+const AuthenticatedStudentProfileRoute = AuthenticatedStudentProfileRouteImport.update({
+  id: "/student/profile",
+  path: "/student/profile",
+  getParentRoute: () => AuthenticatedRoute,
+});
 
-const AuthenticatedStudentApplicationsRoute =
-  AuthenticatedStudentApplicationsRouteImport.update({
-    id: "/student/applications",
-    path: "/student/applications",
-    getParentRoute: () => AuthenticatedRoute,
-  });
+const AuthenticatedStudentProgressRoute = AuthenticatedStudentProgressRouteImport.update({
+  id: "/student/progress",
+  path: "/student/progress",
+  getParentRoute: () => AuthenticatedRoute,
+});
 
-const AuthenticatedCompanyProfileRoute =
-  AuthenticatedCompanyProfileRouteImport.update({
-    id: "/company/profile",
-    path: "/company/profile",
-    getParentRoute: () => AuthenticatedRoute,
-  });
+const AuthenticatedStudentSupportRoute = AuthenticatedStudentSupportRouteImport.update({
+  id: "/student/support",
+  path: "/student/support",
+  getParentRoute: () => AuthenticatedRoute,
+});
 
-const AuthenticatedCompanyPostsRoute =
-  AuthenticatedCompanyPostsRouteImport.update({
-    id: "/company/posts",
-    path: "/company/posts",
-    getParentRoute: () => AuthenticatedRoute,
-  });
+const AuthenticatedStudentApplicationsRoute = AuthenticatedStudentApplicationsRouteImport.update({
+  id: "/student/applications",
+  path: "/student/applications",
+  getParentRoute: () => AuthenticatedRoute,
+});
 
-const AuthenticatedCompanyApplicationsRoute =
-  AuthenticatedCompanyApplicationsRouteImport.update({
-    id: "/company/applications",
-    path: "/company/applications",
-    getParentRoute: () => AuthenticatedRoute,
-  });
-const AuthenticatedCompanyScholarsRoute =
-  AuthenticatedCompanyScholarsRouteImport.update({
-    id: "/company/scholars",
-    path: "/company/scholars",
-    getParentRoute: () => AuthenticatedRoute,
-  });
+const AuthenticatedCompanyProfileRoute = AuthenticatedCompanyProfileRouteImport.update({
+  id: "/company/profile",
+  path: "/company/profile",
+  getParentRoute: () => AuthenticatedRoute,
+});
 
-const AuthenticatedCompanySupportRoute =
-  AuthenticatedCompanySupportRouteImport.update({
-    id: "/company/support",
-    path: "/company/support",
-    getParentRoute: () => AuthenticatedRoute,
-  });
+const AuthenticatedCompanyPostsRoute = AuthenticatedCompanyPostsRouteImport.update({
+  id: "/company/posts",
+  path: "/company/posts",
+  getParentRoute: () => AuthenticatedRoute,
+});
 
-const AuthenticatedAdminModerationRoute = AuthenticatedAdminModerationRouteImport.update({
-  id: "/admin/moderation",
-  path: "/admin/moderation",
+const AuthenticatedCompanyApplicationsRoute = AuthenticatedCompanyApplicationsRouteImport.update({
+  id: "/company/applications",
+  path: "/company/applications",
+  getParentRoute: () => AuthenticatedRoute,
+});
+const AuthenticatedCompanyScholarsRoute = AuthenticatedCompanyScholarsRouteImport.update({
+  id: "/company/scholars",
+  path: "/company/scholars",
   getParentRoute: () => AuthenticatedRoute,
 });
 
@@ -163,70 +155,63 @@ const AuthenticatedStudentJobsIndexRoute = AuthenticatedStudentJobsIndexRouteImp
   getParentRoute: () => AuthenticatedRoute,
 });
 
-const AuthenticatedAdminStudentsIndexRoute =
-  AuthenticatedAdminStudentsIndexRouteImport.update({
-    id: "/admin/students/",
-    path: "/admin/students/",
-    getParentRoute: () => AuthenticatedRoute,
-  });
+const AuthenticatedAdminStudentsIndexRoute = AuthenticatedAdminStudentsIndexRouteImport.update({
+  id: "/admin/students/",
+  path: "/admin/students/",
+  getParentRoute: () => AuthenticatedRoute,
+});
 
-const AuthenticatedAdminPostsIndexRoute =
-  AuthenticatedAdminPostsIndexRouteImport.update({
-    id: "/admin/posts/",
-    path: "/admin/posts/",
-    getParentRoute: () => AuthenticatedRoute,
-  });
+const AuthenticatedAdminPostsIndexRoute = AuthenticatedAdminPostsIndexRouteImport.update({
+  id: "/admin/posts/",
+  path: "/admin/posts/",
+  getParentRoute: () => AuthenticatedRoute,
+});
 
-const AuthenticatedAdminCompaniesIndexRoute =
-  AuthenticatedAdminCompaniesIndexRouteImport.update({
-    id: "/admin/companies/",
-    path: "/admin/companies/",
-    getParentRoute: () => AuthenticatedRoute,
-  });
+const AuthenticatedAdminCompaniesIndexRoute = AuthenticatedAdminCompaniesIndexRouteImport.update({
+  id: "/admin/companies/",
+  path: "/admin/companies/",
+  getParentRoute: () => AuthenticatedRoute,
+});
 
-const AuthenticatedAdminStudentsIdRoute =
-  AuthenticatedAdminStudentsIdRouteImport.update({
-    id: "/admin/students/$id",
-    path: "/admin/students/$id",
-    getParentRoute: () => AuthenticatedRoute,
-  });
+const AuthenticatedAdminStudentsIdRoute = AuthenticatedAdminStudentsIdRouteImport.update({
+  id: "/admin/students/$id",
+  path: "/admin/students/$id",
+  getParentRoute: () => AuthenticatedRoute,
+});
 
-const AuthenticatedAdminPostsIdRoute =
-  AuthenticatedAdminPostsIdRouteImport.update({
-    id: "/admin/posts/$id",
-    path: "/admin/posts/$id",
-    getParentRoute: () => AuthenticatedRoute,
-  });
+const AuthenticatedAdminPostsIdRoute = AuthenticatedAdminPostsIdRouteImport.update({
+  id: "/admin/posts/$id",
+  path: "/admin/posts/$id",
+  getParentRoute: () => AuthenticatedRoute,
+});
 
-const AuthenticatedAdminCompaniesIdRoute =
-  AuthenticatedAdminCompaniesIdRouteImport.update({
-    id: "/admin/companies/$id",
-    path: "/admin/companies/$id",
-    getParentRoute: () => AuthenticatedRoute,
-  });
+const AuthenticatedAdminCompaniesIdRoute = AuthenticatedAdminCompaniesIdRouteImport.update({
+  id: "/admin/companies/$id",
+  path: "/admin/companies/$id",
+  getParentRoute: () => AuthenticatedRoute,
+});
 
-const AuthenticatedStudentJobsIdApplyRoute =
-  AuthenticatedStudentJobsIdApplyRouteImport.update({
-    id: "/student/jobs/$id/apply",
-    path: "/student/jobs/$id/apply",
-    getParentRoute: () => AuthenticatedRoute,
-  });
+const AuthenticatedStudentJobsIdApplyRoute = AuthenticatedStudentJobsIdApplyRouteImport.update({
+  id: "/student/jobs/$id/apply",
+  path: "/student/jobs/$id/apply",
+  getParentRoute: () => AuthenticatedRoute,
+});
 
 const AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute,
   AuthenticatedSettingsRoute,
   AuthenticatedAdminAnalyticsRoute,
-  AuthenticatedAdminModerationRoute,
   AuthenticatedCompanyScholarsRoute,
   AuthenticatedCompanyApplicationsRoute,
   AuthenticatedCompanyPostsRoute,
   AuthenticatedCompanyProfileRoute,
   AuthenticatedStudentApplicationsRoute,
   AuthenticatedStudentProfileRoute,
+  AuthenticatedStudentProgressRoute,
+  AuthenticatedStudentSupportRoute,
   AuthenticatedStudentSavedRoute,
   AuthenticatedStudentsIdRoute,
   AuthenticatedAdminCompaniesIdRoute,
-  AuthenticatedCompanySupportRoute,
   AuthenticatedAdminPostsIdRoute,
   AuthenticatedAdminStudentsIdRoute,
   AuthenticatedAdminCompaniesIndexRoute,

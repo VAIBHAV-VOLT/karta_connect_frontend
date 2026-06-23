@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, User, Briefcase, GraduationCap, FileText, Settings, LogOut, Building2, Users, ClipboardList, Sun, Moon, Bookmark, BarChart3, ShieldAlert, LifeBuoy, } from "lucide-react";
+import { LayoutDashboard, User, Briefcase, GraduationCap, FileText, Settings, LogOut, Building2, Users, ClipboardList, Sun, Moon, Bookmark, BarChart3, MessageSquareWarning, ShieldAlert, LifeBuoy } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, SidebarFooter, } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { signOut, useAuth } from "@/hooks/use-auth";
@@ -10,33 +10,17 @@ const NAV = {
     { to: "/student/profile", label: "Profile", icon: User },
     { to: "/student/progress", label: "Progress", icon: BarChart3 },
     { to: "/student/applications", label: "Applications", icon: FileText },
+    { to: "/student/support", label: "Support", icon: MessageSquareWarning },
     { to: "/settings", label: "Settings", icon: Settings },
   ],
   company: [
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-
     { to: "/company/profile", label: "Company Profile", icon: Building2 },
-
-    {
-      to: "/company/posts",
-      label: "Job Posts",
-      icon: Briefcase,
-      search: { type: "job" },
-    },
-
-    {
-      to: "/company/posts",
-      label: "Internship Posts",
-      icon: GraduationCap,
-      search: { type: "internship" },
-    },
-
+    { to: "/company/posts", label: "Job Posts", icon: Briefcase, search: { type: "job" } },
+    { to: "/company/posts", label: "Internship Posts", icon: GraduationCap, search: { type: "internship" } },
     { to: "/company/applications", label: "Applicants", icon: ClipboardList },
-
     { to: "/company/scholars", label: "Search Scholars", icon: Users },
-
     { to: "/company/support", label: "Support", icon: LifeBuoy },
-
     { to: "/settings", label: "Settings", icon: Settings },
   ],
   admin: [
