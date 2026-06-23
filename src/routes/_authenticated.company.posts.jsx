@@ -5,7 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -16,16 +22,26 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Loader2, Plus, Calendar, MapPin, Briefcase, Trash2, Power, PowerOff, X } from "lucide-react";
+import {
+  Loader2,
+  Plus,
+  Calendar,
+  MapPin,
+  Briefcase,
+  Trash2,
+  Power,
+  PowerOff,
+  X,
+} from "lucide-react";
 import { requireCompany } from "@/lib/route-guards";
 export const Route = createFileRoute("/_authenticated/company/posts")({
-    beforeLoad: requireCompany,
-    validateSearch: (search) => {
-        return {
-            type: search.type || undefined,
-        };
-    },
-    component: CompanyPostsPage,
+  beforeLoad: requireCompany,
+  validateSearch: (search) => {
+    return {
+      type: search.type || undefined,
+    };
+  },
+  component: CompanyPostsPage,
 });
 function CompanyPostsPage() {
   const { user } = useAuth();
@@ -35,6 +51,9 @@ function CompanyPostsPage() {
   const [applicationStats, setApplicationStats] = useState({});
   const [loading, setLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+
+  const [editingPostId, setEditingPostId] = useState(null);
   // Form states
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -56,11 +75,16 @@ function CompanyPostsPage() {
         .maybeSingle();
       if (comp) {
         setCompany(comp);
-        let query = supabase.from("job_posts").select("*").eq("company_id", comp.id);
+        let query = supabase
+          .from("job_posts")
+          .select("*")
+          .eq("company_id", comp.id);
         if (searchParams.type) {
           query = query.eq("type", searchParams.type);
         }
-        const { data: list } = await query.order("created_at", { ascending: false });
+        const { data: list } = await query.order("created_at", {
+          ascending: false,
+        });
         console.log("POSTS", list);
 
         setPosts(list || []);
@@ -169,6 +193,11 @@ function CompanyPostsPage() {
       setDeadline("");
 
       setSkills([]);
+      setPostType("job");
+
+      setMaxPositions(1);
+
+      setEditingPostId(null);
 
       loadCompanyData();
     } catch (err) {
@@ -177,6 +206,78 @@ function CompanyPostsPage() {
       setSubmitting(false);
     }
   }
+
+  async function handleUpdatePost(e) {
+    e.preventDefault();
+
+    try {
+      const { error } = await supabase
+
+        .from("job_posts")
+
+        .update({
+          title,
+
+          description,
+
+          required_skills: skills,
+
+          location,
+
+          type: postType,
+
+          deadline,
+
+          max_positions: maxPositions,
+        })
+
+        .eq("id", editingPostId);
+
+      if (error) throw error;
+
+      toast.success("Post updated successfully!");
+
+      setIsEditOpen(false);
+
+      setEditingPostId(null);
+
+      setTitle("");
+
+      setDescription("");
+
+      setLocation("");
+
+      setDeadline("");
+
+      setSkills([]);
+
+      setMaxPositions(1);
+
+      loadCompanyData();
+    } catch (err) {
+      toast.error(err.message || "Failed to update post.");
+    }
+  }
+
+  function handleEditClick(post) {
+    setEditingPostId(post.id);
+
+    setTitle(post.title);
+
+    setDescription(post.description);
+
+    setLocation(post.location);
+
+    setPostType(post.type);
+
+    setDeadline(post.deadline);
+
+    setMaxPositions(post.max_positions);
+
+    setSkills(post.required_skills || []);
+
+    setIsEditOpen(true);
+  }
   async function toggleActive(postId, currentStatus) {
     try {
       const { error } = await supabase
@@ -184,7 +285,9 @@ function CompanyPostsPage() {
         .update({ active: !currentStatus })
         .eq("id", postId);
       if (error) throw error;
-      toast.success(`Post ${!currentStatus ? "activated" : "deactivated"} successfully!`);
+      toast.success(
+        `Post ${!currentStatus ? "activated" : "deactivated"} successfully!`,
+      );
       loadCompanyData();
     } catch (err) {
       toast.error(err.message || "Failed to update status.");
@@ -198,7 +301,10 @@ function CompanyPostsPage() {
     try {
       // Delete applications first to avoid foreign key errors
       await supabase.from("applications").delete().eq("post_id", postId);
-      const { error } = await supabase.from("job_posts").delete().eq("id", postId);
+      const { error } = await supabase
+        .from("job_posts")
+        .delete()
+        .eq("id", postId);
       if (error) throw error;
       toast.success("Listing deleted successfully!");
       loadCompanyData();
@@ -256,21 +362,57 @@ function CompanyPostsPage() {
           </p>
         </div>
 
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger asChild>
-            <Button className="flex items-center gap-2">
-              <Plus className="h-4 w-4" /> Create New Posting
-            </Button>
-          </DialogTrigger>
+        <Dialog
+          open={isCreateOpen || isEditOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              setIsCreateOpen(false);
+
+              setIsEditOpen(false);
+
+              setEditingPostId(null);
+
+              setTitle("");
+
+              setDescription("");
+
+              setLocation("");
+
+              setPostType("job");
+
+              setDeadline("");
+
+              setSkills([]);
+
+              setMaxPositions(1);
+            }
+          }}
+        >
+          <Button
+            className="flex items-center gap-2"
+            onClick={() => {
+              setIsCreateOpen(true);
+            }}
+          >
+            <Plus className="h-4 w-4" />
+            Create New Posting
+          </Button>
           <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Create Career Posting</DialogTitle>
+              <DialogTitle>
+                {isEditOpen ? "Edit Career Posting" : "Create Career Posting"}
+              </DialogTitle>
               <DialogDescription>
-                Publish a job or internship description to Karta Connect students.
+                {isEditOpen
+                  ? "Update the posting information."
+                  : "Publish a job or internship description to Karta Connect students."}
               </DialogDescription>
             </DialogHeader>
 
-            <form onSubmit={handleCreatePost} className="space-y-4 py-2">
+            <form
+              onSubmit={isEditOpen ? handleUpdatePost : handleCreatePost}
+              className="space-y-4 py-2"
+            >
               <div className="grid gap-2">
                 <Label htmlFor="post-title">
                   Role Title <span className="text-destructive">*</span>
@@ -316,7 +458,8 @@ function CompanyPostsPage() {
 
               <div className="grid gap-2">
                 <Label htmlFor="post-deadline">
-                  Application Deadline <span className="text-destructive">*</span>
+                  Application Deadline{" "}
+                  <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="post-deadline"
@@ -340,7 +483,8 @@ function CompanyPostsPage() {
 
               <div className="grid gap-2">
                 <Label htmlFor="post-desc">
-                  Role Description & Requirements <span className="text-destructive">*</span>
+                  Role Description & Requirements{" "}
+                  <span className="text-destructive">*</span>
                 </Label>
                 <textarea
                   id="post-desc"
@@ -388,7 +532,11 @@ function CompanyPostsPage() {
 
               <DialogFooter className="pt-4 border-t">
                 <Button type="submit" className="w-full" disabled={submitting}>
-                  {submitting ? "Publishing..." : "Publish to Portal"}
+                  {isEditOpen
+                    ? "Save Changes"
+                    : submitting
+                      ? "Publishing..."
+                      : "Publish to Portal"}
                 </Button>
               </DialogFooter>
             </form>
@@ -407,7 +555,9 @@ function CompanyPostsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => setIsCreateOpen(true)}>Create Posting</Button>
+            <Button onClick={() => setIsCreateOpen(true)}>
+              Create Posting
+            </Button>
           </CardContent>
         </Card>
       ) : (
@@ -424,12 +574,17 @@ function CompanyPostsPage() {
             const isDeadlinePassed = deadlineDate < today;
 
             return (
-              <Card key={post.id} className={!post.active || isDeadlinePassed ? "opacity-60" : ""}>
+              <Card
+                key={post.id}
+                className={!post.active || isDeadlinePassed ? "opacity-60" : ""}
+              >
                 <CardContent className="p-6">
                   <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-bold text-lg text-foreground">{post.title}</h3>
+                        <h3 className="font-bold text-lg text-foreground">
+                          {post.title}
+                        </h3>
                         <span
                           className={`text-[10px] border px-2 py-0.5 rounded-full uppercase font-bold tracking-wider ${post.type === "job" ? "bg-blue-500/10 text-blue-500 border-blue-500/20" : "bg-purple-500/10 text-purple-500 border-purple-500/20"}`}
                         >
@@ -446,11 +601,13 @@ function CompanyPostsPage() {
                       </p>
                       <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground pt-2">
                         <span className="flex items-center gap-1">
-                          <MapPin className="h-3.5 w-3.5" /> {post.location || "Remote"}
+                          <MapPin className="h-3.5 w-3.5" />{" "}
+                          {post.location || "Remote"}
                         </span>
                         <span>•</span>
                         <span className="flex items-center gap-1">
-                          <Calendar className="h-3.5 w-3.5" /> Deadline: {post.deadline}
+                          <Calendar className="h-3.5 w-3.5" /> Deadline:{" "}
+                          {post.deadline}
                         </span>
                       </div>
 
@@ -496,13 +653,22 @@ function CompanyPostsPage() {
                       >
                         {post.active ? (
                           <>
-                            <PowerOff className="h-3.5 w-3.5 text-amber-500" /> Close Post
+                            <PowerOff className="h-3.5 w-3.5 text-amber-500" />{" "}
+                            Close Post
                           </>
                         ) : (
                           <>
-                            <Power className="h-3.5 w-3.5 text-emerald-500" /> Reopen Post
+                            <Power className="h-3.5 w-3.5 text-emerald-500" />{" "}
+                            Reopen Post
                           </>
                         )}
+                      </Button>
+                      <Button
+                        onClick={() => handleEditClick(post)}
+                        variant="secondary"
+                        size="sm"
+                      >
+                        Edit
                       </Button>
                       <Button
                         onClick={() => handleDelete(post.id)}
