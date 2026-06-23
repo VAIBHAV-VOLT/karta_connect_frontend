@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getResumeDownloadUrl } from "@/lib/storage-paths";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, User, BookOpen, Award, FileText, ExternalLink, Share2 } from "lucide-react";
+import { Loader2, User, BookOpen, Award, FileText, ExternalLink, Share2, Briefcase } from "lucide-react";
 import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/students/$id")({
     component: StudentDetails,
@@ -151,14 +151,85 @@ function StudentDetails() {
             </CardContent>
           </Card>
 
+          {profile.projects && profile.projects.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Briefcase className="h-5 w-5 text-primary"/> Projects Showcase</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {profile.projects.map((project, idx) => (
+                  <div key={project.id || idx} className="border-b last:border-0 pb-6 last:pb-0">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-2 gap-2">
+                      <h4 className="font-bold text-foreground text-base">{project.name}</h4>
+                      <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-md w-fit">
+                        {project.startDate} - {project.ongoing ? "Present" : project.endDate}
+                      </span>
+                    </div>
+                    {project.link && (
+                      <a href={normalizeUrl(project.link)} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-sm inline-flex items-center mb-4">
+                        <ExternalLink className="h-3.5 w-3.5 mr-1" /> View Project
+                      </a>
+                    )}
+                    <div className="space-y-4 text-sm text-muted-foreground">
+                      {project.impact && (
+                        <div>
+                          <span className="text-xs font-semibold text-foreground block mb-1">Impact & Description</span>
+                          <p className="whitespace-pre-wrap">{project.impact}</p>
+                        </div>
+                      )}
+                      {project.learning && (
+                        <div>
+                          <span className="text-xs font-semibold text-foreground block mb-1">What I Learned</span>
+                          <p className="whitespace-pre-wrap">{project.learning}</p>
+                        </div>
+                      )}
+                    </div>
+                    {project.photos && project.photos.length > 0 && (
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {project.photos.map((photo, pIdx) => (
+                          <a href={photo} target="_blank" rel="noopener noreferrer" key={pIdx}>
+                            <img src={photo} alt={`Project snapshot ${pIdx + 1}`} className="h-20 w-32 object-cover rounded-md border hover:opacity-80 transition-opacity" />
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
           {(profile.achievements || profile.extracurriculars) && (<Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2"><Award className="h-5 w-5 text-primary"/> Achievements & Activities</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 text-sm">
                 {profile.achievements && (<div>
-                    <span className="text-xs font-semibold text-foreground block">Achievements</span>
-                    <p className="text-muted-foreground whitespace-pre-wrap">{profile.achievements}</p>
+                    <span className="text-xs font-semibold text-foreground block mb-2">Achievements</span>
+                    <div className="space-y-3">
+                      {(() => {
+                        let items = [];
+                        try {
+                          items = JSON.parse(profile.achievements);
+                          if (!Array.isArray(items)) {
+                            items = [{ id: 'legacy', title: profile.achievements }];
+                          }
+                        } catch (e) {
+                          items = [{ id: 'legacy', title: profile.achievements }];
+                        }
+                        return items.map((item, idx) => (
+                          <div key={item.id || idx} className="bg-muted/30 p-3 rounded-md border text-sm">
+                            <div className="font-semibold text-foreground">{item.title}</div>
+                            {item.description && <p className="text-muted-foreground text-xs mt-1">{item.description}</p>}
+                            {item.certificateUrl && (
+                              <a href={item.certificateUrl} target="_blank" rel="noreferrer" className="text-primary hover:underline text-xs inline-flex items-center mt-2">
+                                <ExternalLink className="h-3 w-3 mr-1" /> View Certificate
+                              </a>
+                            )}
+                          </div>
+                        ));
+                      })()}
+                    </div>
                   </div>)}
                 {profile.extracurriculars && (<div>
                     <span className="text-xs font-semibold text-foreground block">Extracurriculars</span>
@@ -189,14 +260,21 @@ function StudentDetails() {
             </CardContent>
           </Card>
 
-          {(profile.github_url || profile.portfolio_url || profile.project_url) && (<Card>
+          {(profile.github_url || profile.linkedin_url || profile.portfolio_url || profile.project_url) && (<Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">External Links</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
+                {profile.linkedin_url && (<div>
+                    <span className="text-xs text-muted-foreground block">LinkedIn</span>
+                    <a href={normalizeUrl(profile.linkedin_url)} target="_blank" rel="noopener noreferrer" className="text-primary underline inline-flex items-center gap-1 break-all">
+                      {profile.linkedin_url}
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  </div>)}
                 {profile.github_url && (<div>
                     <span className="text-xs text-muted-foreground block">GitHub</span>
-                    <a href={normalizeUrl(profile.github_url)} target="_blank" rel="noopener noreferrer" className="text-primary underline inline-flex items-center gap-1">
+                    <a href={normalizeUrl(profile.github_url)} target="_blank" rel="noopener noreferrer" className="text-primary underline inline-flex items-center gap-1 break-all">
                       {profile.github_url}
                       <ExternalLink className="h-3.5 w-3.5" />
                     </a>
@@ -234,6 +312,17 @@ function StudentDetails() {
               <CardContent>
                 <a href={resumeDownloadUrl || "#"} target="_blank" rel="noopener noreferrer" className="inline-flex w-full items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-primary hover:bg-primary/5">
                   {resumeDownloadUrl ? (<>View Resume <ExternalLink className="ml-2 h-4 w-4"/></>) : "Loading resume..."}
+                </a>
+              </CardContent>
+            </Card>)}
+
+          {profile.certificate_url && (<Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Award className="h-5 w-5 text-yellow-600"/> General Certificate</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <a href={profile.certificate_url.startsWith('http') ? profile.certificate_url : `https://${profile.certificate_url}`} target="_blank" rel="noopener noreferrer" className="inline-flex w-full items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-primary hover:bg-primary/5">
+                  View Certificate <ExternalLink className="ml-2 h-4 w-4"/>
                 </a>
               </CardContent>
             </Card>)}

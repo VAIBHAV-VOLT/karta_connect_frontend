@@ -47,8 +47,7 @@ const profileSchema = z.object({
     }, "Graduation year must be between 2026 and 2036"),
   bio: z.string()
     .max(500, "Bio must be at most 500 characters")
-    .optional()
-    .refine(val => !val || isNA(val) || val.length >= 20, "Bio must be at least 20 characters if provided"),
+    .optional(),
   githubUrl: z.string()
     .max(255, "GitHub URL must be at most 255 characters")
     .optional(),
@@ -65,8 +64,7 @@ const profileSchema = z.object({
   resumeUrl: z.string().min(1, "Please upload your Resume (PDF format)"),
   extracurriculars: z.string()
     .max(500, "Extracurriculars must be at most 500 characters")
-    .optional()
-    .refine(val => !val || isNA(val) || val.length >= 10, "Extracurriculars must be at least 10 characters if provided"),
+    .optional(),
   achievements: z.array(z.object({
     id: z.string().optional(),
     title: z.string().optional(),
