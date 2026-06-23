@@ -47,12 +47,14 @@ function StudentApplicationsPage() {
     }
     const statusStyles = {
         applied: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+        "under review": "bg-orange-500/10 text-orange-500 border-orange-500/20",
         shortlisted: "bg-purple-500/10 text-purple-500 border-purple-500/20",
         selected: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
         rejected: "bg-destructive/10 text-destructive border-destructive/20"
     };
     const statusLabels = {
         applied: "Applied",
+        "under review": "Under Review",
         shortlisted: "Shortlisted",
         selected: "Selected",
         rejected: "Rejected"
@@ -60,6 +62,7 @@ function StudentApplicationsPage() {
 
     const COLORS = {
         applied: "#3b82f6", // blue-500
+        "under review": "#f97316", // orange-500
         shortlisted: "#a855f7", // purple-500
         selected: "#10b981", // emerald-500
         rejected: "#ef4444" // red-500
@@ -67,6 +70,7 @@ function StudentApplicationsPage() {
 
     const statsMap = {
         applied: 0,
+        "under review": 0,
         shortlisted: 0,
         selected: 0,
         rejected: 0
@@ -121,24 +125,40 @@ function StudentApplicationsPage() {
             </CardContent>
           </Card>
           
-          <div className="grid grid-cols-2 gap-4">
-             <Card>
-               <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Total Applied</CardTitle></CardHeader>
-               <CardContent><p className="text-3xl font-bold">{apps.length}</p></CardContent>
-             </Card>
-             <Card>
-               <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-emerald-500">Selected</CardTitle></CardHeader>
-               <CardContent><p className="text-3xl font-bold">{statsMap.selected || 0}</p></CardContent>
-             </Card>
-             <Card>
-               <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-purple-500">Shortlisted</CardTitle></CardHeader>
-               <CardContent><p className="text-3xl font-bold">{statsMap.shortlisted || 0}</p></CardContent>
-             </Card>
-             <Card>
-               <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-blue-500">Applied</CardTitle></CardHeader>
-               <CardContent><p className="text-3xl font-bold">{statsMap.applied || 0}</p></CardContent>
-             </Card>
-          </div>
+          <Card className="h-full flex flex-col justify-center">
+             <CardHeader className="pb-2">
+               <CardTitle>Pipeline Breakdown</CardTitle>
+               <CardDescription>Track your application conversion across stages.</CardDescription>
+             </CardHeader>
+             <CardContent>
+               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                 <div className="flex flex-col justify-center p-3.5 bg-muted/30 rounded-xl border border-border/50 transition-all hover:bg-muted/50">
+                   <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Total Apps</span>
+                   <span className="text-2xl font-black text-foreground">{apps.length}</span>
+                 </div>
+                 <div className="flex flex-col justify-center p-3.5 bg-emerald-500/10 rounded-xl border border-emerald-500/20 transition-all hover:bg-emerald-500/15">
+                   <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Selected</span>
+                   <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{statsMap.selected || 0}</span>
+                 </div>
+                 <div className="flex flex-col justify-center p-3.5 bg-purple-500/10 rounded-xl border border-purple-500/20 transition-all hover:bg-purple-500/15">
+                   <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider mb-1">Shortlisted</span>
+                   <span className="text-2xl font-black text-purple-600 dark:text-purple-400">{statsMap.shortlisted || 0}</span>
+                 </div>
+                 <div className="flex flex-col justify-center p-3.5 bg-orange-500/10 rounded-xl border border-orange-500/20 transition-all hover:bg-orange-500/15">
+                   <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider mb-1">Reviewing</span>
+                   <span className="text-2xl font-black text-orange-600 dark:text-orange-400">{statsMap["under review"] || 0}</span>
+                 </div>
+                 <div className="flex flex-col justify-center p-3.5 bg-blue-500/10 rounded-xl border border-blue-500/20 transition-all hover:bg-blue-500/15">
+                   <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1">Applied</span>
+                   <span className="text-2xl font-black text-blue-600 dark:text-blue-400">{statsMap.applied || 0}</span>
+                 </div>
+                 <div className="flex flex-col justify-center p-3.5 bg-destructive/10 rounded-xl border border-destructive/20 transition-all hover:bg-destructive/15">
+                   <span className="text-[10px] font-bold text-destructive uppercase tracking-wider mb-1">Rejected</span>
+                   <span className="text-2xl font-black text-destructive">{statsMap.rejected || 0}</span>
+                 </div>
+               </div>
+             </CardContent>
+          </Card>
         </div>
       )}
 
@@ -151,6 +171,7 @@ function StudentApplicationsPage() {
        >
          <option value="">All</option>
          <option value="applied">Applied</option>
+         <option value="under review">Under Review</option>
          <option value="shortlisted">Shortlisted</option>
          <option value="selected">Selected</option>
          <option value="rejected">Rejected</option>

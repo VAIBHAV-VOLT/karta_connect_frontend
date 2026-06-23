@@ -398,10 +398,11 @@ function StudentProgressPage() {
           <h2 className="text-lg font-bold text-foreground">Opportunity Journey</h2>
           <p className="text-xs text-muted-foreground mt-0.5">Drag and drop cards or select actions to update application stages.</p>
         </div>
-        <div className="grid gap-4 mt-6 overflow-x-auto grid-cols-4 min-w-[950px] pb-4">
-          {(["applied", "shortlisted", "selected", "rejected"]).map((status) => {
+        <div className="grid gap-4 mt-6 overflow-x-auto grid-cols-5 min-w-[1100px] pb-4">
+          {(["applied", "under review", "shortlisted", "selected", "rejected"]).map((status) => {
             const columnsInfo = {
               applied: { title: "Applied", border: "border", text: "text-blue-400", bg: "bg-blue-400/5", badge: "bg-blue-400/10" },
+              "under review": { title: "Under Review", border: "border", text: "text-orange-400", bg: "bg-orange-400/5", badge: "bg-orange-400/10" },
               shortlisted: { title: "Shortlisted", border: "border", text: "text-purple-400", bg: "bg-purple-400/5", badge: "bg-purple-400/10" },
               selected: { title: "Selected", border: "border-emerald-500/20", text: "text-emerald-400", bg: "bg-emerald-400/5", badge: "bg-emerald-400/10" },
               rejected: { title: "Rejected", border: "border-destructive/20", text: "text-destructive", bg: "bg-destructive/5", badge: "bg-destructive/10" }
@@ -439,7 +440,7 @@ function StudentProgressPage() {
                         <div className="relative group/actions">
                           <button className="text-[9px] font-bold text-primary hover:underline px-1.5 py-0.5 bg-primary/10 rounded">Stage</button>
                           <div className="hidden group-hover/actions:flex flex-col absolute bottom-full right-0 bg-background border border rounded-lg shadow-xl p-1 z-30 w-32 space-y-0.5 text-left">
-                            {(["applied", "shortlisted", "selected", "rejected"]).map((opt) => (
+                            {(["applied", "under review", "shortlisted", "selected", "rejected"]).map((opt) => (
                               <button key={opt} onClick={() => moveCard(card.id, opt)} className="text-[10px] px-2 py-1 hover:bg-card rounded font-bold text-muted-foreground text-left capitalize">Move to {opt}</button>
                             ))}
                           </div>

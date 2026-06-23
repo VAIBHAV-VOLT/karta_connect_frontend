@@ -85,7 +85,7 @@ function CompanyPostsPage() {
 
               applied: 0,
 
-              review: 0,
+              "under review": 0,
 
               shortlisted: 0,
 
@@ -97,8 +97,8 @@ function CompanyPostsPage() {
 
           apps?.forEach((app) => {
             stats[app.post_id].total++;
-
-            stats[app.post_id][app.status]++;
+            stats[app.post_id][app.status] =
+              (stats[app.post_id][app.status] || 0) + 1;
           });
 
           setApplicationStats(stats);
@@ -466,8 +466,8 @@ function CompanyPostsPage() {
                         </span>
 
                         <span className="text-amber-500">
-                          Review:
-                          {applicationStats[post.id]?.review || 0}
+                          Under Review:
+                          {applicationStats[post.id]?.["under review"] || 0}
                         </span>
 
                         <span className="text-purple-500">
