@@ -2,7 +2,7 @@
 
 A modern React-based talent portal frontend for **Karta Connect** — connecting students with scholarship and job opportunities. Built with React, TanStack Router, and Tailwind CSS with a comprehensive UI component library powered by Radix UI.
 
-> **Note:** This is the frontend repository. For the backend API, see [KartaConnect Backend](https://github.com/yourusername/karta_connect_backend) (update repository URL).
+> **Note:** This is the frontend repository. For the backend API, see [KartaConnect Backend](https://github.com/VAIBHAV-VOLT/karta_connect_backend) (update repository URL).
 
 ## 🎯 Overview
 
