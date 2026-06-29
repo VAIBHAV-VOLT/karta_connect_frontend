@@ -320,6 +320,10 @@ function CompanyScholarsPage() {
                   View Resume
                 </a>
               )}
+
+              <button className="bg-green-600 text-white px-4 py-2 rounded-md w-32">
+                Message
+              </button>
             </div>
           </div>
         ))}
@@ -479,6 +483,10 @@ function CompanyScholarsPage() {
                           🏅 {achievement.title}
                         </h4>
 
+                        <p className="text-muted-foreground">
+                          {achievement.description}
+                        </p>
+
                         {achievement.certificateUrl && (
                           <a
                             href={achievement.certificateUrl}
@@ -564,6 +572,27 @@ function CompanyScholarsPage() {
         "
                 >
                   📜 Certificate
+                </a>
+              )}
+
+              {selectedStudent?.linkedin_url && (
+                <a
+                  href={
+                    selectedStudent.linkedin_url?.startsWith("http")
+                      ? selectedStudent.linkedin_url
+                      : `https://${selectedStudent.linkedin_url}`
+                  }
+                  target="_blank"
+                  rel="noreferrer"
+                  className="
+          bg-blue-600
+          text-white
+          px-4
+          py-2
+          rounded-md
+        "
+                >
+                  LinkedIn
                 </a>
               )}
             </div>
