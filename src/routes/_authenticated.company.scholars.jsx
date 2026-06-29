@@ -22,6 +22,20 @@ function calculateMatch(studentSkills = [], requiredSkills = []) {
   return Math.round((matches / requiredSkills.length) * 100);
 }
 
+function getMatchColor(match) {
+  if (match >= 80) return "text-green-600";
+
+  if (match >= 50) return "text-yellow-600";
+
+  return "text-red-600";
+}
+
+function getMatchingSkills(studentSkills = [], requiredSkills = []) {
+  return studentSkills.filter((skill) =>
+    requiredSkills.some((req) => req.toLowerCase() === skill.toLowerCase()),
+  );
+}
+
 function CompanyScholarsPage() {
   const [students, setStudents] = useState([]);
   const [search, setSearch] = useState("");
@@ -114,6 +128,9 @@ function CompanyScholarsPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Search Scholars</h1>
+      <p className="text-muted-foreground ">
+        {sortedStudents.length} scholars found
+      </p>
 
       <input
         type="text"
@@ -177,6 +194,14 @@ function CompanyScholarsPage() {
         </select>
       </div>
 
+      {sortedStudents.length === 0 && (
+        <div className="text-center py-10">
+          <h2 className="text-3xl font-bold">No scholars found</h2>
+
+          <p className="text-muted-foreground">Try another filter</p>
+        </div>
+      )}
+
       <div className="space-y-4">
         {sortedStudents.map((student) => (
           <div
@@ -192,53 +217,89 @@ function CompanyScholarsPage() {
   space-y-3
   "
           >
-            <h2 className="text-2xl font-bold">👤 {student.name}</h2>
+            <div className="flex justify-between items-start">
+              <div>
+                <h2 className="text-2xl font-bold">👤 {student.name}</h2>
 
-            <p>🏫 {student.university}</p>
+                <p className="text-muted-foreground">🏫 {student.university}</p>
+              </div>
 
-            <p>📘 {student.course}</p>
+              {(() => {
+                const match = calculateMatch(student.skills, requiredSkills);
 
-            <p>📅 {student.year_of_study}</p>
+                return (
+                  <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-violet-600 to-blue-600">
+                    <span className="text-sm">🤖</span>
 
-            <p className="text-muted-foreground">
-              📍 {student.location || "Not specified"}
-            </p>
+                    <div>
+                      <p className="text-xs font-semibold text-white">
+                        AI Match: {match}%
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
 
-            <p className="text-muted-foreground">
-              🎓 Graduation:
-              {student.graduation_year || "N/A"}
-            </p>
+            <div className="flex gap-6 flex-wrap text-sm">
+              <p>📘 {student.course}</p>
+
+              <p>📅 {student.year_of_study}</p>
+
+              <p>📍 {student.location || "Not specified"}</p>
+
+              <p>🎓 {student.graduation_year || "N/A"}</p>
+            </div>
 
             <div className="flex gap-2 mt-2 flex-wrap">
-              {student.skills?.map((skill) => (
-                <span
-                  key={skill}
-                  className="bg-muted text-foreground px-2 py-1 rounded-md text-sm font-medium"
-                >
-                  {skill}
-                </span>
-              ))}
-            </div>
-            <div className="mt-3">
-              <div className="mt-3">
-                <p className="font-bold text-green-600">
-                  🎯 AI Match:
-                  {calculateMatch(student.skills, requiredSkills)}%
-                </p>
+              {student.skills
 
-                <p className="text-sm text-muted-foreground">
-                  Looking for:
-                  {requiredSkills.length
-                    ? requiredSkills.join(", ")
-                    : "No skills selected"}
-                </p>
+                ?.slice(0, 5)
+
+                .map((skill) => (
+                  <span
+                    key={skill}
+                    className="bg-muted px-2 py-1 rounded-full text-xs font-medium"
+                  >
+                    {skill}
+                  </span>
+                ))}
+            </div>
+            {student.skills?.length > 5 && (
+              <p className="text-sm text-muted-foreground">
+                +{student.skills.length - 5}
+                more skills
+              </p>
+            )}
+            <div className="space-y-2">
+              <div className="mt-3">
+                <div className="mt-2">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <p className="font-semibold text-sm">Matching Skills</p>
+
+                    <div className="flex gap-2 flex-wrap">
+                      {getMatchingSkills(
+                        student.skills,
+
+                        requiredSkills,
+                      ).map((skill) => (
+                        <span
+                          key={skill}
+                          className="bg-green-100 text-green-700 px-2 py-1 rounded-md text-xs"
+                        >
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-
-            <div className="mt-4 flex gap-3 flex-wrap items-center">
+            <hr className="border-muted" />
+            <div className="mt-4 flex gap-3">
               <button
                 onClick={() => handleViewProfile(student)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md w-32"
+                className="bg-blue-600 text-white px-4 py-2 rounded-md"
               >
                 View Profile
               </button>
@@ -259,10 +320,6 @@ function CompanyScholarsPage() {
                   View Resume
                 </a>
               )}
-
-              <button className="bg-green-600 text-white px-4 py-2 rounded-md w-32">
-                Message
-              </button>
             </div>
           </div>
         ))}
@@ -271,44 +328,128 @@ function CompanyScholarsPage() {
       {openProfile && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-background text-foreground rounded-xl p-6 w-[700px] max-h-[90vh] overflow-y-auto space-y-6 border">
-            <div className="flex items-center gap-4">
+            <div className="border rounded-xl p-5 flex items-center gap-6">
               <img
                 src={selectedStudent?.avatar_url || "/default-avatar.png"}
                 alt="avatar"
-                className="h-24 w-24 rounded-full object-cover border"
+                className="h-28 w-28 rounded-full object-cover border-4 border-blue-500"
               />
 
-              <div>
-                <h2 className="text-3xl font-bold">{selectedStudent?.name}</h2>
+              <div className="space-y-2">
+                <h2 className="text-3xl font-bold">
+                  👤 {selectedStudent?.name}
+                </h2>
 
-                <p className="text-muted-foreground">
-                  {selectedStudent?.email}
+                <p>
+                  📍
+                  {selectedStudent?.location || "Not specified"}
                 </p>
 
-                <p>📍 {selectedStudent?.location || "Not specified"}</p>
+                <div className="flex gap-3 flex-wrap">
+                  <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
+                    🏫
+                    {selectedStudent?.university}
+                  </span>
+
+                  <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm">
+                    📘
+                    {selectedStudent?.course}
+                  </span>
+                </div>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <p>🏫 {selectedStudent?.university}</p>
+            <div className="border rounded-xl p-5">
+              <h3 className="font-bold text-lg mb-4">
+                🎓 Academic Information
+              </h3>
 
-              <p>📘 {selectedStudent?.course}</p>
+              <div className="grid grid-cols-2 gap-4">
+                <p>
+                  📅 Year:
+                  {selectedStudent?.year_of_study}
+                </p>
 
-              <p>📅 {selectedStudent?.year_of_study}</p>
-
-              <p>🎓 {selectedStudent?.graduation_year}</p>
+                <p>
+                  🎓 Graduation:
+                  {selectedStudent?.graduation_year}
+                </p>
+              </div>
             </div>
-            <div>
+            <div className="border rounded-xl p-5">
               <h3 className="font-bold mb-2">📝 About</h3>
 
               <p>{selectedStudent?.bio || "No bio added"}</p>
             </div>
-            <div>
-              <h3 className="font-bold mb-2">📝 About</h3>
 
-              <p>{selectedStudent?.bio || "No bio added"}</p>
+            <div className="border rounded-xl p-5">
+              <h3 className="font-bold mb-3">📞 Contact Information</h3>
+
+              <div className="space-y-3">
+                <div className="border rounded-lg p-3 flex items-center gap-3">
+                  <span className="text-2xl">📧</span>
+
+                  <div>
+                    <p className="font-semibold">Email</p>
+
+                    <a
+                      href={`mailto:${selectedStudent?.email}`}
+                      className="text-green-600 hover:underline"
+                    >
+                      {selectedStudent?.email || "Not provided"}
+                    </a>
+                  </div>
+                </div>
+
+                {selectedStudent?.linkedin_url && (
+                  <div className="border rounded-lg p-3 flex items-center gap-3">
+                    <span className="text-2xl">💼</span>
+
+                    <div>
+                      <p className="font-semibold">LinkedIn</p>
+
+                      <a
+                        href={
+                          selectedStudent.linkedin_url.startsWith("http")
+                            ? selectedStudent.linkedin_url
+                            : `https://${selectedStudent.linkedin_url}`
+                        }
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        View LinkedIn Profile
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {selectedStudent?.github_url &&
+                  selectedStudent.github_url !== "NA" && (
+                    <div className="border rounded-lg p-3 flex items-center gap-3">
+                      <span className="text-2xl">💻</span>
+
+                      <div>
+                        <p className="font-semibold">GitHub</p>
+
+                        <a
+                          href={
+                            selectedStudent.github_url.startsWith("http")
+                              ? selectedStudent.github_url
+                              : `https://${selectedStudent.github_url}`
+                          }
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-gray-600 hover:underline"
+                        >
+                          View GitHub Profile
+                        </a>
+                      </div>
+                    </div>
+                  )}
+              </div>
             </div>
-            ADD HERE
-            <div>
+
+            <div className="border rounded-xl p-5">
               <h3 className="font-bold mb-2">🏆 Achievements</h3>
 
               {(() => {
@@ -338,10 +479,6 @@ function CompanyScholarsPage() {
                           🏅 {achievement.title}
                         </h4>
 
-                        <p className="text-muted-foreground">
-                          {achievement.description}
-                        </p>
-
                         {achievement.certificateUrl && (
                           <a
                             href={achievement.certificateUrl}
@@ -363,7 +500,7 @@ function CompanyScholarsPage() {
                 );
               })()}
             </div>
-            <div>
+            <div className="border rounded-xl p-5">
               <h3 className="font-bold mb-2">🎯 Extracurricular Activities</h3>
 
               <p>
@@ -371,8 +508,8 @@ function CompanyScholarsPage() {
                   "No extracurricular activities added"}
               </p>
             </div>
-            <div></div>
-            <div>
+
+            <div className="border rounded-xl p-5">
               <h3 className="font-bold mb-2">🛠 Skills</h3>
 
               <div className="flex gap-2 flex-wrap">
@@ -391,7 +528,7 @@ function CompanyScholarsPage() {
                 ))}
               </div>
             </div>
-            <div className="flex gap-3 flex-wrap">
+            <div className="border rounded-xl p-5 flex gap-4 flex-wrap justify-center">
               {selectedStudent?.resume_url && (
                 <a
                   href={
@@ -402,12 +539,12 @@ function CompanyScholarsPage() {
                   target="_blank"
                   rel="noreferrer"
                   className="
-          bg-purple-600
-          text-white
-          px-4
-          py-2
-          rounded-md
-        "
+                            bg-purple-600
+                            text-white
+                            px-4
+                            py-2
+                            rounded-md
+                          "
                 >
                   📄 Resume
                 </a>
@@ -427,27 +564,6 @@ function CompanyScholarsPage() {
         "
                 >
                   📜 Certificate
-                </a>
-              )}
-
-              {selectedStudent?.linkedin_url && (
-                <a
-                  href={
-                    selectedStudent.linkedin_url?.startsWith("http")
-                      ? selectedStudent.linkedin_url
-                      : `https://${selectedStudent.linkedin_url}`
-                  }
-                  target="_blank"
-                  rel="noreferrer"
-                  className="
-          bg-blue-600
-          text-white
-          px-4
-          py-2
-          rounded-md
-        "
-                >
-                  LinkedIn
                 </a>
               )}
             </div>
