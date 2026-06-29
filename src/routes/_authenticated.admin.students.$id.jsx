@@ -2,9 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2, ArrowLeft, User, BookOpen, Award, FileText, ExternalLink, ShieldCheck, ShieldAlert, Linkedin } from "lucide-react";
+import { Loader2, ArrowLeft, User, BookOpen, Award, FileText, ExternalLink, ShieldCheck, ShieldAlert, Linkedin, Github, Briefcase } from "lucide-react";
 import { requireAdmin } from "@/lib/route-guards";
 export const Route = createFileRoute("/_authenticated/admin/students/$id")({
     beforeLoad: requireAdmin,
@@ -185,6 +186,55 @@ function AdminStudentProfileDetailsPage() {
           </CardContent>
         </Card>
 
+        {/* Projects Showcase */}
+        {profile.projects && profile.projects.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Briefcase className="h-5 w-5 text-primary"/> Projects Showcase</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {profile.projects.map((project, idx) => (
+                <div key={project.id || idx} className="border-b last:border-0 pb-6 last:pb-0">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-2 gap-2">
+                    <h4 className="font-bold text-foreground text-base">{project.name}</h4>
+                    <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-md w-fit">
+                      {project.startDate} - {project.ongoing ? "Present" : project.endDate}
+                    </span>
+                  </div>
+                  {project.link && (
+                    <a href={project.link.startsWith('http') ? project.link : `https://${project.link}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-sm inline-flex items-center mb-4">
+                      <ExternalLink className="h-3.5 w-3.5 mr-1" /> View Project
+                    </a>
+                  )}
+                  <div className="space-y-4 text-sm text-muted-foreground">
+                    {project.impact && (
+                      <div>
+                        <span className="text-xs font-semibold text-foreground block mb-1">Impact & Description</span>
+                        <p className="whitespace-pre-wrap">{project.impact}</p>
+                      </div>
+                    )}
+                    {project.learning && (
+                      <div>
+                        <span className="text-xs font-semibold text-foreground block mb-1">What I Learned</span>
+                        <p className="whitespace-pre-wrap">{project.learning}</p>
+                      </div>
+                    )}
+                  </div>
+                  {project.photos && project.photos.length > 0 && (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {project.photos.map((photo, pIdx) => (
+                        <a href={photo} target="_blank" rel="noopener noreferrer" key={pIdx}>
+                          <img src={photo} alt={`Project snapshot ${pIdx + 1}`} className="h-20 w-32 object-cover rounded-md border hover:opacity-80 transition-opacity" />
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Accomplishments */}
         {(profile.achievements || profile.extracurriculars) && (<Card>
           <CardHeader>
@@ -194,8 +244,31 @@ function AdminStudentProfileDetailsPage() {
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             {profile.achievements && (<div className="space-y-1">
-              <span className="text-xs font-semibold text-foreground block">Achievements & Certificates</span>
-              <p className="text-muted-foreground whitespace-pre-wrap">{profile.achievements}</p>
+              <span className="text-xs font-semibold text-foreground block mb-2">Achievements & Certificates</span>
+              <div className="space-y-3">
+                {(() => {
+                  let items = [];
+                  try {
+                    items = JSON.parse(profile.achievements);
+                    if (!Array.isArray(items)) {
+                      items = [{ id: 'legacy', title: profile.achievements }];
+                    }
+                  } catch (e) {
+                    items = [{ id: 'legacy', title: profile.achievements }];
+                  }
+                  return items.map((item, idx) => (
+                    <div key={item.id || idx} className="bg-muted/30 p-3 rounded-md border text-sm">
+                      <div className="font-semibold text-foreground">{item.title}</div>
+                      {item.description && <p className="text-muted-foreground text-xs mt-1">{item.description}</p>}
+                      {item.certificateUrl && (
+                        <a href={item.certificateUrl} target="_blank" rel="noreferrer" className="text-primary hover:underline text-xs inline-flex items-center mt-2">
+                          <ExternalLink className="h-3 w-3 mr-1" /> View Certificate
+                        </a>
+                      )}
+                    </div>
+                  ));
+                })()}
+              </div>
             </div>)}
             {profile.extracurriculars && (<div className="space-y-1 border-t pt-3">
               <span className="text-xs font-semibold text-foreground block">Extracurricular Activities</span>
@@ -271,6 +344,27 @@ function AdminStudentProfileDetailsPage() {
           </CardContent>
         </Card>)}
 
+        {/* GitHub Link */}
+        {profile.github_url && (<Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-1.5"><Github className="h-5 w-5" /> GitHub Profile</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground mb-4">Visit candidate's GitHub profile.</p>
+            <a 
+              href={profile.github_url.startsWith('http') ? profile.github_url : `https://${profile.github_url}`} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="w-full block"
+            >
+              <Button variant="outline" size="sm" className="w-full flex items-center justify-center gap-2">
+                View GitHub <ExternalLink className="h-4 w-4" />
+              </Button>
+            </a>
+          </CardContent>
+        </Card>)}
+
+        {/* LinkedIn Link */}
         {profile.linkedin_url && (<Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-1.5"><Linkedin className="h-5 w-5 text-blue-600" /> LinkedIn Profile</CardTitle>

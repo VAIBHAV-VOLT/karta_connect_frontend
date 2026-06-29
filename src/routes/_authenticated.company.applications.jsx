@@ -209,7 +209,7 @@ function CompanyApplicationsPage() {
   }
   const statusStyles = {
     applied: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-    review: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+    "under review": "bg-amber-500/10 text-amber-500 border-amber-500/20",
     shortlisted: "bg-purple-500/10 text-purple-500 border-purple-500/20",
     selected: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
     rejected: "bg-destructive/10 text-destructive border-destructive/20",
@@ -236,7 +236,7 @@ function CompanyApplicationsPage() {
 
     applied: applications.filter((a) => a.status === "applied").length,
 
-    review: applications.filter((a) => a.status === "review").length,
+    "under review": applications.filter((a) => a.status === "under review").length,
 
     shortlisted: applications.filter((a) => a.status === "shortlisted").length,
 
@@ -265,7 +265,7 @@ function CompanyApplicationsPage() {
 
           <option value="applied">Applied ({counts.applied})</option>
 
-          <option value="review">Under Review ({counts.review})</option>
+          <option value="under review">Under Review ({counts["under review"]})</option>
 
           <option value="shortlisted">
             Shortlisted ({counts.shortlisted})
@@ -361,7 +361,7 @@ function CompanyApplicationsPage() {
                       >
                         <option value="applied">Applied</option>
 
-                        <option value="review">Under Review</option>
+                        <option value="under review">Under Review</option>
 
                         <option value="shortlisted">Shortlisted</option>
 
