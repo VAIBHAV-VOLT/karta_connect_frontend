@@ -19,6 +19,7 @@ import { Route as AuthenticatedCompanyProfileRouteImport } from "./routes/_authe
 import { Route as AuthenticatedCompanyPostsRouteImport } from "./routes/_authenticated.company.posts";
 import { Route as AuthenticatedCompanyApplicationsRouteImport } from "./routes/_authenticated.company.applications";
 import { Route as AuthenticatedCompanyScholarsRouteImport } from "./routes/_authenticated.company.scholars";
+import { Route as AuthenticatedCompanySupportRouteImport } from "./routes/_authenticated.company.support";
 import { Route as AuthenticatedStudentProgressRouteImport } from "./routes/_authenticated.student.progress";
 import { Route as AuthenticatedStudentSupportRouteImport } from "./routes/_authenticated.student.support";
 import { Route as AuthenticatedAdminAnalyticsRouteImport } from "./routes/_authenticated.admin.analytics";
