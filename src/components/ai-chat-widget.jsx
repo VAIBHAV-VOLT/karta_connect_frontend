@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { MessageSquare, X, Send, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { buildApiUrl } from "@/lib/api-client";
 
 export function AIChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -26,13 +27,14 @@ export function AIChatWidget() {
     }
   }, [messages, isOpen, isTyping]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
 
+    const userMessageText = input.trim();
     const newUserMsg = {
       id: Date.now(),
       sender: "user",
-      text: input.trim(),
+      text: userMessageText,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
@@ -40,17 +42,45 @@ export function AIChatWidget() {
     setInput("");
     setIsTyping(true);
 
-    // Mock AI response
-    setTimeout(() => {
+    const history = messages.map(msg => ({
+      role: msg.sender === "bot" ? "model" : "user",
+      text: msg.text
+    }));
+
+    try {
+      const response = await fetch(buildApiUrl("/api/ai/chat"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: userMessageText, history }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to connect to backend");
+      }
+
+      const data = await response.json();
+      
       const botResponse = {
         id: Date.now() + 1,
         sender: "bot",
-        text: "I am a mocked AI assistant. I'm currently unable to process complex requests, but I'm here to help!",
+        text: data.reply || "Something went wrong.",
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
       setMessages((prev) => [...prev, botResponse]);
+    } catch (error) {
+      console.error("AI Chat Error:", error);
+      const errorResponse = {
+        id: Date.now() + 1,
+        sender: "bot",
+        text: "Sorry, I am having trouble connecting to the server.",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      setMessages((prev) => [...prev, errorResponse]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -61,14 +91,14 @@ export function AIChatWidget() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end pointer-events-none">
       {/* Chat Window */}
       <div
         className={cn(
-          "mb-4 flex flex-col overflow-hidden rounded-2xl border border-white/20 bg-white/70 shadow-2xl backdrop-blur-xl transition-all duration-300 dark:border-white/10 dark:bg-zinc-950/70 sm:w-[380px] w-[calc(100vw-3rem)] h-[500px] max-h-[80vh]",
+          "pointer-events-auto mb-4 flex flex-col overflow-hidden rounded-2xl border border-white/20 bg-white/70 shadow-2xl backdrop-blur-xl transition-all duration-300 dark:border-white/10 dark:bg-zinc-950/70 sm:w-[380px] w-[calc(100vw-3rem)] h-[500px] max-h-[80vh]",
           isOpen
             ? "translate-y-0 scale-100 opacity-100"
-            : "pointer-events-none translate-y-4 scale-95 opacity-0"
+            : "!pointer-events-none translate-y-4 scale-95 opacity-0"
         )}
       >
         {/* Header */}
@@ -165,7 +195,7 @@ export function AIChatWidget() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "group relative flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/25 transition-transform duration-300 hover:scale-110 active:scale-95",
+          "pointer-events-auto group relative flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/25 transition-transform duration-300 hover:scale-110 active:scale-95",
           isOpen && "rotate-90 bg-muted text-muted-foreground shadow-none"
         )}
       >
